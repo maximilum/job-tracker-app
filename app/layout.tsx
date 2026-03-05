@@ -1,15 +1,26 @@
+// For adding custom fonts with other frameworks, see:
+// https://tailwindcss.com/docs/font-family
 import type { Metadata } from "next";
-import { Geist, Geist_Mono } from "next/font/google";
+import { Tomorrow, BioRhyme, JetBrains_Mono } from "next/font/google";
 import "./globals.css";
+import Navbar from "@/components/Navbar";
 
-const geistSans = Geist({
-  variable: "--font-geist-sans",
+const fontSans = Tomorrow({
   subsets: ["latin"],
+  weight: ["400"],
+  variable: "--font-sans",
 });
 
-const geistMono = Geist_Mono({
-  variable: "--font-geist-mono",
+const fontSerif = BioRhyme({
   subsets: ["latin"],
+  weight: ["400"],
+  variable: "--font-serif",
+});
+
+const fontMono = JetBrains_Mono({
+  subsets: ["latin"],
+  weight: ["400"],
+  variable: "--font-mono",
 });
 
 export const metadata: Metadata = {
@@ -25,7 +36,7 @@ export default function RootLayout({
   return (
     <html lang="en">
       <body
-        className={`${geistSans.variable} ${geistMono.variable} antialiased`}
+        className={`${fontSans.variable} ${fontSerif.variable} ${fontMono.variable} antialiased`}
       >
         {children}
       </body>
