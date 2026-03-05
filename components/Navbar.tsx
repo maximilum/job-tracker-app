@@ -8,7 +8,7 @@ const Navbar = () => {
     <nav className="border-b border-border bg-background text-foreground">
       <div className="container flex mx-auto px-4 h-16 items-center justify-between">
         <Link href="/">
-          <div className="flex items-center gap-4 text-primary text-2xl font-semibold">
+          <div className="flex items-center gap-4    text-primary text-2xl font-semibold">
             <IdCardLanyard size="30" />
             <p>Job Tracker</p>
           </div>
