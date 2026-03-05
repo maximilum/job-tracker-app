@@ -1,5 +1,6 @@
 import { Button } from "@/components/ui/button";
 import { ArrowBigRight, ArrowRight } from "lucide-react";
+import Link from "next/link";
 
 export default function Home() {
   return (
@@ -19,9 +20,14 @@ export default function Home() {
               cracks.
             </p>
             <div className="flex flex-col items-center gap-4">
-              <Button size={"xl"} className=" h-16 px-16 font-semibold text-md">
-                Start Free <ArrowBigRight className="ml-2 size-6" />
-              </Button>
+              <Link href="/sign-up">
+                <Button
+                  size={"xl"}
+                  className=" h-16 px-16 font-semibold text-md"
+                >
+                  Start Free <ArrowBigRight className="ml-2 size-6" />
+                </Button>
+              </Link>
               <p className="text-sm text-muted-foreground">
                 it will always be free, No credit card. No trials. No catch.
               </p>
