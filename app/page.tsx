@@ -1,6 +1,14 @@
 import HeroImagesSection from "@/components/HeroImagesSection";
 import { Button } from "@/components/ui/button";
-import { ArrowBigRight, ArrowRight } from "lucide-react";
+import { Card, CardContent, CardHeader } from "@/components/ui/card";
+import {
+  ArrowBigRight,
+  ArrowRight,
+  Briefcase,
+  Car,
+  CheckCircle2,
+  TrendingUp,
+} from "lucide-react";
 import Link from "next/link";
 
 export default function Home() {
@@ -22,11 +30,8 @@ export default function Home() {
             </p>
             <div className="flex flex-col items-center gap-4">
               <Link href="/sign-up">
-                <Button
-                  size={"xl"}
-                  className=" h-16 px-16 font-semibold text-md"
-                >
-                  Start Free <ArrowBigRight className="ml-2 size-6" />
+                <Button size="xl" className=" font-semibold text-xl">
+                  Start Free <ArrowBigRight className="ml-2 size-8" />
                 </Button>
               </Link>
               <p className="text-sm text-muted-foreground">
@@ -38,6 +43,53 @@ export default function Home() {
 
         {/* Hero images section */}
         <HeroImagesSection></HeroImagesSection>
+
+        {/* Features */}
+        <section className="border-t border-border">
+          <div className="container my-24 px-16 sm:px-16 md:px-32 lg:px-64 mx-auto ">
+            <div className="flex flex-col gap-16">
+              <article className="flex flex-col gap-2 border-b border-border">
+                <div className="text-primary bg-accent size-16 flex items-center justify-center rounded-sm">
+                  <Briefcase className="size-10" />
+                </div>
+                <h3 className="text-semibold text-lg text-primary">
+                  Organize Applications
+                </h3>
+
+                <p>
+                  Create custom boards and columns to track your job
+                  applications at every stage of the process.
+                </p>
+              </article>
+              <article className="flex flex-col gap-2 border-b border-border">
+                <div className="text-primary bg-accent size-16 flex items-center justify-center rounded-sm">
+                  <CheckCircle2 className="size-10" />
+                </div>
+                <h3 className="text-semibold text-lg text-primary">
+                  Stay Organized
+                </h3>
+
+                <p>
+                  Never lose track of an application. Keep all your job search
+                  information in one centralized place.
+                </p>
+              </article>
+              <article className="flex flex-col gap-2 border-b border-border">
+                <div className="text-primary bg-accent size-16 flex items-center justify-center rounded-sm">
+                  <TrendingUp className="size-10" />
+                </div>
+                <h3 className="text-semibold text-lg text-primary">
+                  Track Progress
+                </h3>
+
+                <p>
+                  Monitor your application status from applied to interview to
+                  offer with visual Kanban boards.
+                </p>
+              </article>
+            </div>
+          </div>
+        </section>
       </main>
     </div>
   );
