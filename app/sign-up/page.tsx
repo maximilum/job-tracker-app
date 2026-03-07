@@ -24,7 +24,7 @@ const SignUp = () => {
 
   return (
     <div className="min-h-[calc(100vh-52px)] w-full flex justify-center items-center">
-      <Card className="p-4 w-96">
+      <Card className="p-8 w-128">
         <CardTitle>
           <h1>Sign Up</h1>
         </CardTitle>
