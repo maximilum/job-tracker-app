@@ -4,6 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardFooter, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { set } from "mongoose";
 import Link from "next/link";
 import React, { useState } from "react";
 
@@ -20,6 +21,7 @@ const SignUp = () => {
 
     setIsLoading(true);
     console.log(name, email, password);
+    setIsLoading(false);
   }
 
   return (
@@ -37,6 +39,8 @@ const SignUp = () => {
               <Input
                 id="name"
                 type="text"
+                value={name}
+                onChange={(e) => setName(e.target.value)}
                 required
                 placeholder="John Doe"
                 className="placeholder:text-neutral-300"
@@ -49,6 +53,8 @@ const SignUp = () => {
               <Input
                 id="email"
                 type="email"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
                 required
                 placeholder="John@doe.com"
                 className="placeholder:text-neutral-300"
@@ -58,7 +64,14 @@ const SignUp = () => {
               <Label htmlFor="password" className="mb-1">
                 Password
               </Label>
-              <Input id="password" type="password" required></Input>
+              <Input
+                id="password"
+                type="password"
+                required
+                minLength={8}
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+              ></Input>
             </div>
           </CardContent>
           <CardFooter className="flex flex-col gap-4">
@@ -66,7 +79,7 @@ const SignUp = () => {
               {isLoading ? "Signing up..." : "Sign up"}
             </Button>
             {error && (
-              <p className="text-center  text-xs text-destructive">{error}</p>
+              <p className="text-center text-xs text-destructive">{error}</p>
             )}
             <p className="text-xs">
               if you have an account{"  "}
