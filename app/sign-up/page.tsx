@@ -4,9 +4,9 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardFooter, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { set } from "mongoose";
 import Link from "next/link";
 import React, { useState } from "react";
+import { signUp } from "@/lib/auth/auth-client";
 
 const SignUp = () => {
   const [name, setName] = useState("");

@@ -41,6 +41,7 @@ async function connectDB() {
   } catch (error) {
     console.log("error connectiong to database", error);
     cached.promise = null;
+    throw error;
   }
   return cached.conn;
 }
