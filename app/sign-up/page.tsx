@@ -7,8 +7,11 @@ import { Label } from "@/components/ui/label";
 import Link from "next/link";
 import React, { useState } from "react";
 import { signUp } from "@/lib/auth/auth-client";
+import { useRouter } from "next/navigation";
 
 const SignUp = () => {
+  const Router = useRouter();
+
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -20,8 +23,21 @@ const SignUp = () => {
     e.preventDefault();
 
     setIsLoading(true);
-    console.log(name, email, password);
-    setIsLoading(false);
+    setError("");
+    try {
+      const result = await signUp.email({ name, email, password });
+
+      if (result.error) {
+        console.log(result);
+        setError(result.error?.message ?? "Something went wrong");
+      } else {
+        Router.push("/dashboard");
+      }
+    } catch (error) {
+      setError("an unexpected error occurred");
+    } finally {
+      setIsLoading(false);
+    }
   }
 
   return (
