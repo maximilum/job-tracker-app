@@ -1,6 +1,6 @@
 import mongoose, { Schema } from "mongoose";
 
-interface IColumn {
+export interface IColumn {
   name: string;
   boardId: mongoose.Types.ObjectId;
   order: number;

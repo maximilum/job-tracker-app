@@ -1,6 +1,6 @@
 import mongoose, { Schema } from "mongoose";
 
-interface IBoard {
+export interface IBoard {
   name: string;
   userId: string;
   columns: mongoose.Types.ObjectId[];
