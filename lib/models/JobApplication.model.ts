@@ -4,7 +4,7 @@ export interface IJobApplication extends Document {
   company: string;
   position: string;
   location?: string;
-  status: string;
+  status?: string;
   columnId: mongoose.Types.ObjectId;
   boardId: mongoose.Types.ObjectId;
   userId: string;

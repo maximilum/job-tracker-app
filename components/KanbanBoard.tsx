@@ -3,6 +3,9 @@
 import { useState } from "react";
 import { Board, Column } from "../lib/models/models.types";
 import { Card, CardContent, CardHeader, CardTitle } from "./ui/card";
+import { createJobApplication } from "@/actions/jobApplication";
+import { useSession } from "../lib/auth/auth-client";
+
 import {
   Award,
   Calendar,
@@ -68,6 +71,7 @@ interface DroppableColumnProps {
   column: Column;
   config: ColConfig;
   columns: Column[];
+  boardId: string;
 }
 interface jobFormInterface {
   company: string;
@@ -81,10 +85,17 @@ interface jobFormInterface {
   description?: string;
 }
 
-const DroppableColumn = ({ column, config, columns }: DroppableColumnProps) => {
+const DroppableColumn = ({
+  column,
+  config,
+  columns,
+  boardId,
+}: DroppableColumnProps) => {
   columns = columns.filter((col) => col._id !== column._id);
+  const userId = useSession().data?.user?.id;
 
   const [isOpen, setIsOpen] = useState(false);
+  const [error, setError] = useState("");
 
   const [jobForm, setJobForm] = useState<jobFormInterface>({
     company: "",
@@ -100,14 +111,23 @@ const DroppableColumn = ({ column, config, columns }: DroppableColumnProps) => {
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
+    setError("");
     const santizedJobForm = {
       ...jobForm,
       tags: jobForm.tags
         ?.split(",")
         .map((tag) => tag.trim())
         .filter((tag) => tag.length > 0),
+      userId: userId,
+      boardId: boardId,
+      columnId: column._id,
     };
-    console.log(santizedJobForm);
+    const res = await createJobApplication(santizedJobForm);
+    if (res.error) {
+      setError(res.error);
+    } else {
+      setIsOpen(false);
+    }
   }
 
   return (
@@ -116,8 +136,8 @@ const DroppableColumn = ({ column, config, columns }: DroppableColumnProps) => {
       <Dialog open={isOpen} onOpenChange={setIsOpen}>
         <DialogContent className="min-w-max">
           <form onSubmit={handleSubmit}>
-            <DialogHeader>
-              <DialogTitle>Job Details</DialogTitle>
+            <DialogHeader className="mb-4">
+              <DialogTitle>Add job to {column.name}</DialogTitle>
             </DialogHeader>
             {/* Form Start */}
             <div>
@@ -258,7 +278,7 @@ const DroppableColumn = ({ column, config, columns }: DroppableColumnProps) => {
               </div>
             </div>
             {/* Footer */}
-            <div className="flex justify-between w-full">
+            <div className="flex justify-between w-full mt-8">
               <div>
                 <Button
                   variant={"destructive"}
@@ -268,18 +288,20 @@ const DroppableColumn = ({ column, config, columns }: DroppableColumnProps) => {
                       position: "",
                       location: "",
                       status: "",
+                      salary: "",
                       notes: "",
                       jobUrl: "",
                       tags: "",
                       description: "",
                     });
-                    setSalaryForm({ from: "", to: "" });
+                    setError("");
                   }}
                 >
                   Clear Form
                 </Button>
               </div>
               <div className="flex gap-2">
+                {error && <p className="text-red-500">{error}</p>}
                 <Button type="submit">Add</Button>
                 <DialogClose asChild>
                   <Button variant="outline">Cancel</Button>
@@ -378,6 +400,7 @@ const KanbanBoard = ({ board }: KanbanBoardProps) => {
             column={col}
             config={config}
             columns={sortedColumns}
+            boardId={board._id}
           ></DroppableColumn>
         );
       })}

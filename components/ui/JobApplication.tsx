@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { JobApplication as Job, Column } from "../../lib/models/models.types";
+import { deleteJobApplication } from "@/actions/jobApplication";
 import {
   Card,
   CardAction,
@@ -89,7 +90,13 @@ const JobApplication = ({ job, columns }: JobApplicationProps) => {
         .map((tag) => tag.trim())
         .filter((tag) => tag.length > 0),
     };
-    console.log(santizedJobForm);
+  }
+
+  async function handleDelete(jobId: string) {
+    console.log(jobId);
+    try {
+      const res = await deleteJobApplication(jobId);
+    } catch (error) {}
   }
 
   return (
@@ -244,7 +251,9 @@ const JobApplication = ({ job, columns }: JobApplicationProps) => {
               <div className="flex gap-2">
                 <Button type="submit">Add</Button>
                 <DialogClose asChild>
-                  <Button variant="outline">Cancel</Button>
+                  <Button type="button" variant="outline">
+                    Cancel
+                  </Button>
                 </DialogClose>
               </div>
             </DialogFooter>
@@ -309,7 +318,7 @@ const JobApplication = ({ job, columns }: JobApplicationProps) => {
                       </DropdownMenuItem>
                     );
                   })}
-                  <DropdownMenuItem className="">
+                  <DropdownMenuItem onClick={() => handleDelete(job._id)}>
                     <div className="flex gap-4 items-center">
                       <span>
                         <Trash className="text-destructive" />

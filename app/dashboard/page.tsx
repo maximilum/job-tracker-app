@@ -5,6 +5,8 @@ import { Board } from "@/lib/models";
 import connectDB from "@/lib/db";
 import KanbanBoard from "@/components/KanbanBoard";
 import { Board as BoardType } from "@/lib/models/models.types";
+import { Button } from "@/components/ui/button";
+import { createJobApplication } from "@/actions/jobApplication";
 
 async function getBoard(userID: string) {
   "use cache";
@@ -24,7 +26,6 @@ const DashboardComponent = async () => {
   if (!session) redirect("/sign-in");
 
   const board = await getBoard(session?.user.id ?? "");
-  console.log(board);
 
   return (
     <div>
