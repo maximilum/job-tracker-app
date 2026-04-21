@@ -2,7 +2,10 @@
 
 import { useState } from "react";
 import { JobApplication as Job, Column } from "../../lib/models/models.types";
-import { deleteJobApplication } from "@/actions/jobApplication";
+import {
+  deleteJobApplication,
+  updateJobApplication,
+} from "@/actions/jobApplication";
 import {
   Card,
   CardAction,
@@ -45,6 +48,7 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "@/components/ui/dialog";
+import { getSession } from "@/lib/auth/auth";
 
 interface JobApplicationProps {
   job: Job;
@@ -81,22 +85,39 @@ const JobApplication = ({ job, columns }: JobApplicationProps) => {
     tags: job.tags?.join(", "),
     description: job.description,
   });
-  async function handleSubmit(e: React.FormEvent) {
+
+  async function handleDelete(jobId: string) {
+    console.log(jobId);
+    try {
+      const res = await deleteJobApplication(jobId);
+    } catch (error) {
+      console.log(error);
+    }
+  }
+
+  async function handleEditing(
+    e: React.FormEvent,
+    jobId: string,
+    newColumnId: string,
+  ) {
     e.preventDefault();
-    const santizedJobForm = {
+    const sanitizedJobForm = {
       ...jobForm,
       tags: jobForm.tags
         ?.split(",")
         .map((tag) => tag.trim())
         .filter((tag) => tag.length > 0),
     };
+    const updates = { ...sanitizedJobForm, jobId, columnId: newColumnId };
+    updateJobApplication(updates);
   }
 
-  async function handleDelete(jobId: string) {
-    console.log(jobId);
-    try {
-      const res = await deleteJobApplication(jobId);
-    } catch (error) {}
+  async function handleMoveToNewColumn(e, jobId: string, newColumnId: string) {
+    e.preventDefault();
+    const updates = { jobId, columnId: newColumnId };
+    console.log(updates);
+    updateJobApplication(updates);
+    return;
   }
 
   return (
@@ -104,7 +125,7 @@ const JobApplication = ({ job, columns }: JobApplicationProps) => {
       {/* Pop Up Editing */}
       <Dialog open={isOpen} onOpenChange={setIsOpen}>
         <DialogContent className="min-w-max">
-          <form onSubmit={handleSubmit}>
+          <form onSubmit={(e) => handleEditing(e, job._id, job.columnId)}>
             <DialogHeader>
               <DialogTitle>Job Details</DialogTitle>
             </DialogHeader>
@@ -249,7 +270,7 @@ const JobApplication = ({ job, columns }: JobApplicationProps) => {
             {/* Footer */}
             <DialogFooter>
               <div className="flex gap-2">
-                <Button type="submit">Add</Button>
+                <Button type="submit">Edit</Button>
                 <DialogClose asChild>
                   <Button type="button" variant="outline">
                     Cancel
@@ -261,7 +282,8 @@ const JobApplication = ({ job, columns }: JobApplicationProps) => {
         </DialogContent>
       </Dialog>
 
-      {/* ############################### */}
+      {/* #################################################################################### */}
+      {/* #################################################################################### */}
       {/* Job */}
       <Card
         key={job._id}
@@ -311,7 +333,12 @@ const JobApplication = ({ job, columns }: JobApplicationProps) => {
                   </DropdownMenuItem>
                   {columns.map((col) => {
                     return (
-                      <DropdownMenuItem key={col._id}>
+                      <DropdownMenuItem
+                        key={col._id}
+                        onClick={(e) => {
+                          handleMoveToNewColumn(e, job._id, col._id);
+                        }}
+                      >
                         <div>
                           <span>Move to {col.name}</span>
                         </div>
@@ -363,10 +390,10 @@ const JobApplication = ({ job, columns }: JobApplicationProps) => {
             className={`grid transition-all duration-300 ${isExpanded ? "grid-rows-[1fr]" : "grid-rows-[0fr]"} my-4`}
           >
             <div className="overflow-hidden text-xs">
-              <p className="border-l-2 border-sky-200 pl-4 italic">
+              <p className="border-l-2 border-sky-200 pl-4 italic mb-8">
                 {job.description}
               </p>
-              <p className="">{job.notes}</p>
+              {job.notes && <p className="">{job.notes}</p>}
             </div>
           </div>
           <div className="flex gap-2 p-0 flex-wrap">
