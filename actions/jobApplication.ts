@@ -1,7 +1,7 @@
 "use server";
 
 import connectDB from "@/lib/db";
-import { JobApplication as JobI } from "../../lib/models/models.types";
+import { JobApplication as JobI } from "@/lib/models/models.types";
 import { getSession } from "@/lib/auth/auth";
 import { Board } from "@/lib/models";
 import { Column } from "@/lib/models";
@@ -59,7 +59,7 @@ export async function createJobApplication(job: JobI) {
   // Calculate the order
   const count = await JobApplication.countDocuments({ columnId: job.columnId });
   const index = count;
-  const order = index * 100;
+  const order = index ;
 
   //assign new order
   jobApplication.order = order;
@@ -209,7 +209,9 @@ export async function updateJobApplication(updates: Updates) {
         .sort({ order: 1 })
         .select("_id order");
       //                 calculate order from all jobs "Findindex"
-      const originalIndex = originalJobs.findIndex((job) => job._id === jobId);
+      const originalIndex = originalJobs.findIndex(
+        (job) => job._id.toString() === jobId
+      );
       //             # get the remaining jop applications docs
       //                 filter the moved job from all jobs "sorted"
       const remainingJobs = originalJobs.filter((job) => job._id !== jobId);
