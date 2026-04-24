@@ -140,19 +140,19 @@ const JobApplication = ({ job, columns }: JobApplicationProps) => {
     <>
       {/* Pop Up Editing */}
       <Dialog open={isOpen} onOpenChange={setIsOpen}>
-        <DialogContent className="min-w-max">
+        <DialogContent className="sm:max-w-xl w-[95vw] max-h-[90vh] overflow-y-auto">
           <form onSubmit={(e) => handleEditing(e, job._id, job.columnId)}>
             <DialogHeader>
               <DialogTitle>Job Details</DialogTitle>
             </DialogHeader>
             {/* Form Start */}
-            <div>
+            <div className="mt-4">
               {/* Main Form */}
-              <div className="grid grid-cols-2 justify-center items-start gap-4 ">
+              <div className="grid grid-cols-1 md:grid-cols-2 justify-center items-start gap-4">
                 {/* Company */}
-                <div className="flex gap-2 items-center">
-                  <label htmlFor="company" className="w-24">
-                    Compnay*
+                <div className="flex flex-col sm:flex-row gap-1 sm:gap-2 sm:items-center">
+                  <label htmlFor="company" className="w-24 shrink-0">
+                    Company*
                   </label>
                   <input
                     required
@@ -160,15 +160,15 @@ const JobApplication = ({ job, columns }: JobApplicationProps) => {
                     onChange={(e) =>
                       setJobForm({ ...jobForm, company: e.target.value })
                     }
-                    className="border-2 px-2 py-1"
+                    className="border-2 px-2 py-1 w-full"
                     name="company"
                     type="text"
                     placeholder="Apple, facebook, ..."
                   />
                 </div>
                 {/* Position */}
-                <div className="flex gap-2 items-center">
-                  <label htmlFor="position" className="w-24">
+                <div className="flex flex-col sm:flex-row gap-1 sm:gap-2 sm:items-center">
+                  <label htmlFor="position" className="w-24 shrink-0">
                     Position*
                   </label>
                   <input
@@ -179,13 +179,13 @@ const JobApplication = ({ job, columns }: JobApplicationProps) => {
                     }
                     name="position"
                     type="text"
-                    className="border-2 px-2 py-1"
+                    className="border-2 px-2 py-1 w-full"
                     placeholder="Software Engineer"
                   />
                 </div>
                 {/* Location */}
-                <div className="flex gap-2 items-center">
-                  <label htmlFor="location" className="w-24">
+                <div className="flex flex-col sm:flex-row gap-1 sm:gap-2 sm:items-center">
+                  <label htmlFor="location" className="w-24 shrink-0">
                     Location
                   </label>
                   <input
@@ -195,13 +195,13 @@ const JobApplication = ({ job, columns }: JobApplicationProps) => {
                     }
                     name="location"
                     type="text"
-                    className="border-2 px-2 py-1"
+                    className="border-2 px-2 py-1 w-full"
                     placeholder="Riyadh, KSA"
                   />
                 </div>
                 {/* Status */}
-                <div className="flex gap-2 items-center">
-                  <label htmlFor="status" className="w-24">
+                <div className="flex flex-col sm:flex-row gap-1 sm:gap-2 sm:items-center">
+                  <label htmlFor="status" className="w-24 shrink-0">
                     Status
                   </label>
                   <input
@@ -211,14 +211,13 @@ const JobApplication = ({ job, columns }: JobApplicationProps) => {
                     }
                     name="status"
                     type="text"
-                    className="border-2 px-2 py-1"
+                    className="border-2 px-2 py-1 w-full"
                     placeholder="applied"
                   />
                 </div>
                 {/* Salary */}
-
-                <div className="flex gap-2 items-center">
-                  <label htmlFor="salary" className="w-24">
+                <div className="flex flex-col sm:flex-row gap-1 sm:gap-2 sm:items-center">
+                  <label htmlFor="salary" className="w-24 shrink-0">
                     Salary
                   </label>
                   <input
@@ -228,36 +227,37 @@ const JobApplication = ({ job, columns }: JobApplicationProps) => {
                     }
                     type="text"
                     name="salary"
-                    className="border-2 px-2 py-1"
+                    className="border-2 px-2 py-1 w-full"
                     placeholder="10k"
                   />
                 </div>
               </div>
               {/* Tags Section */}
-              <div className="grid grid-cols-[77px_auto] items-center my-4">
-                <label htmlFor="tags" className="w-24 ">
+              <div className="flex flex-col sm:flex-row gap-1 sm:gap-2 sm:items-start my-4">
+                <label htmlFor="tags" className="w-24 shrink-0 sm:mt-1">
                   Tags
                 </label>
-                <input
-                  value={jobForm.tags}
-                  onChange={(e) =>
-                    setJobForm({
-                      ...jobForm,
-                      tags: e.target.value,
-                    })
-                  }
-                  type="text"
-                  placeholder="React, Next JS, FrontEnd"
-                  name="tags"
-                  className="border-2 px-2 py-1 w-full"
-                />
-                <p> </p>
-                <p className="text-xs text-gray-400 font-light">
-                  Make sure to seperate each tag with a comma
-                </p>
+                <div className="w-full">
+                  <input
+                    value={jobForm.tags}
+                    onChange={(e) =>
+                      setJobForm({
+                        ...jobForm,
+                        tags: e.target.value,
+                      })
+                    }
+                    type="text"
+                    placeholder="React, Next JS, FrontEnd"
+                    name="tags"
+                    className="border-2 px-2 py-1 w-full"
+                  />
+                  <p className="text-xs text-gray-400 font-light mt-1">
+                    Make sure to seperate each tag with a comma
+                  </p>
+                </div>
               </div>
               {/* Description */}
-              <div className=" my-4">
+              <div className="my-4 flex flex-col gap-1">
                 <label htmlFor="description">Description</label>
                 <textarea
                   value={jobForm.description}
@@ -267,31 +267,33 @@ const JobApplication = ({ job, columns }: JobApplicationProps) => {
                   name="description"
                   placeholder="Job Description..."
                   className="border-2 px-2 py-1 w-full"
+                  rows={4}
                 />
               </div>
               {/* Notes */}
-              <div>
+              <div className="flex flex-col gap-1">
                 <label htmlFor="notes">Notes</label>
                 <textarea
                   value={jobForm.notes}
                   onChange={(e) =>
                     setJobForm({ ...jobForm, notes: e.target.value })
                   }
-                  name="description"
+                  name="notes"
                   placeholder="Write your notes..."
                   className="border-2 px-2 py-1 w-full"
+                  rows={3}
                 />
               </div>
             </div>
             {/* Footer */}
-            <DialogFooter>
-              <div className="flex gap-2">
-                <Button type="submit">Edit</Button>
+            <DialogFooter className="mt-6">
+              <div className="flex justify-end gap-2 w-full">
                 <DialogClose asChild>
                   <Button type="button" variant="outline">
                     Cancel
                   </Button>
                 </DialogClose>
+                <Button type="submit">Edit</Button>
               </div>
             </DialogFooter>
           </form>
