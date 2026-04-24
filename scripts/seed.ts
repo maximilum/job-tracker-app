@@ -169,8 +169,8 @@ async function seed() {
 
     if (!board) {
       console.log("⚠️  Board not found. Creating board...");
-      const { initUserBoard } = await import("../lib/init_user_board");
-      const initUserBoardFunc = initUserBoard;
+      const initUserBoardModule = await import("../lib/init_user_board");
+      const initUserBoardFunc = initUserBoardModule.default;
 
       board = await initUserBoardFunc(USER_ID);
       console.log("✅ Board created");
