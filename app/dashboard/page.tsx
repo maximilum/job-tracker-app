@@ -8,22 +8,22 @@ import { Board as BoardType } from "@/lib/models/models.types";
 import { Button } from "@/components/ui/button";
 import { createJobApplication } from "@/actions/jobApplication";
 
-async function getBoard(userID: string) {
-  "use cache";
-  await connectDB();
-
-  const boardDoc = await Board.findOne({ userId: userID }).populate({
-    path: "columns",
-    populate: { path: "jobApplications" },
-  });
-  const board = JSON.parse(JSON.stringify(boardDoc));
-  if (!board) return { error: "Board not found" };
-  return board;
-}
-
 const DashboardComponent = async () => {
   const session = await getSession();
   if (!session) redirect("/sign-in");
+
+  async function getBoard(userID: string) {
+    "use cache";
+    await connectDB();
+
+    const boardDoc = await Board.findOne({ userId: userID }).populate({
+      path: "columns",
+      populate: { path: "jobApplications" },
+    });
+    const board = JSON.parse(JSON.stringify(boardDoc));
+    if (!board) return { error: "Board not found" };
+    return board;
+  }
 
   const board = await getBoard(session?.user.id ?? "");
 
@@ -38,7 +38,7 @@ const DashboardComponent = async () => {
             </p>
           </h1>
 
-          <KanbanBoard board={board}></KanbanBoard>
+          <KanbanBoard boardDoc={board}></KanbanBoard>
         </div>
       </div>
     </div>

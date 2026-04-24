@@ -1,17 +1,33 @@
 "use client";
 
-import { useState } from "react";
+import { useRef, useState } from "react";
 import { Board, Column } from "../lib/models/models.types";
 import { Card, CardContent, CardHeader, CardTitle } from "./ui/card";
-import { createJobApplication } from "@/actions/jobApplication";
+import {
+  createJobApplication,
+  updateJobApplication,
+} from "@/actions/jobApplication";
 import { useSession } from "../lib/auth/auth-client";
+import {
+  MouseSensor,
+  TouchSensor,
+  DndContext,
+  useDroppable,
+  useSensor,
+  useSensors,
+  closestCorners,
+  DragStartEvent,
+  DragOverlay,
+  DragEndEvent,
+  DragOverEvent,
+  pointerWithin,
+} from "@dnd-kit/core";
 
 import {
   Award,
   Calendar,
   CheckCircle2,
   CirclePlus,
-  Columns,
   EllipsisVertical,
   Mic,
   Plus,
@@ -22,11 +38,8 @@ import {
   Dialog,
   DialogClose,
   DialogContent,
-  DialogDescription,
-  DialogFooter,
   DialogHeader,
   DialogTitle,
-  DialogTrigger,
 } from "@/components/ui/dialog";
 import {
   DropdownMenu,
@@ -36,6 +49,13 @@ import {
 } from "./ui/dropdown-menu";
 import { Button } from "./ui/button";
 import JobApplication from "../components/ui/JobApplication";
+import {
+  SortableContext,
+  verticalListSortingStrategy,
+} from "@dnd-kit/sortable";
+import { useBoard } from "@/hooks/useBoard";
+import JobApplicationModel from "@/lib/models/JobApplication.model";
+import boardMutationQueue from "@/lib/mutationQueue";
 
 interface ColConfig {
   color: string;
@@ -64,9 +84,6 @@ const COLUMN_CONFIG: Array<ColConfig> = [
   },
 ];
 
-//  ####################################################################################
-// Droppable Column
-
 interface DroppableColumnProps {
   column: Column;
   config: ColConfig;
@@ -84,7 +101,8 @@ interface jobFormInterface {
   tags?: string;
   description?: string;
 }
-
+//  ####################################################################################
+// Droppable Column
 const DroppableColumn = ({
   column,
   config,
@@ -94,9 +112,18 @@ const DroppableColumn = ({
   columns = columns.filter((col) => col._id !== column._id);
   const userId = useSession().data?.user?.id;
 
+  // Dnd kit
+  const { setNodeRef } = useDroppable({
+    id: column._id,
+    data: {
+      type: "column",
+      columnId: column._id,
+    },
+  });
+  const items = column.jobApplications.map((job) => job._id);
+
   const [isOpen, setIsOpen] = useState(false);
   const [error, setError] = useState("");
-
   const [jobForm, setJobForm] = useState<jobFormInterface>({
     company: "",
     position: "",
@@ -109,7 +136,7 @@ const DroppableColumn = ({
     description: "",
   });
 
-  async function handleSubmit(e: React.FormEvent) {
+  async function handleSubmit(e: React.SubmitEvent) {
     e.preventDefault();
     setError("");
     const santizedJobForm = {
@@ -131,8 +158,8 @@ const DroppableColumn = ({
   }
 
   return (
-    <Card className="p-0 min-w-106 max-h-max ">
-      {/* Add Job Dialog */}
+    <Card className="p-0 min-w-106 h-full ">
+      {/* Column -> Add Job Dialog */}
       <Dialog open={isOpen} onOpenChange={setIsOpen}>
         <DialogContent className="min-w-max">
           <form onSubmit={handleSubmit}>
@@ -312,7 +339,7 @@ const DroppableColumn = ({
         </DialogContent>
       </Dialog>
 
-      {/* Header  */}
+      {/* Column Header  */}
       <CardHeader className="p-0">
         <div
           className={`w-full h-16 px-8 ${config.color} flex justify-between items-center`}
@@ -355,19 +382,22 @@ const DroppableColumn = ({
         </div>
       </CardHeader>
 
-      {/* Body */}
+      {/* Column Body */}
 
-      <CardContent className="pb-4 ">
+      <CardContent className="pb-4 " ref={setNodeRef}>
         <div className="grid gap-4 ">
-          {column.jobApplications.map((job) => {
-            return (
-              <JobApplication
-                key={job._id}
-                job={job}
-                columns={columns}
-              ></JobApplication>
-            );
-          })}
+          <SortableContext items={items} strategy={verticalListSortingStrategy}>
+            {column.jobApplications.map((job) => {
+              return (
+                <JobApplication
+                  key={job._id}
+                  job={job}
+                  columns={columns}
+                ></JobApplication>
+              );
+            })}
+          </SortableContext>
+
           <div
             className="flex justify-center items-center gap-4 border-dashed border-2 py-2 hover:bg-muted"
             onClick={() => setIsOpen(true)}
@@ -384,26 +414,133 @@ const DroppableColumn = ({
 // ############################################################################
 // Main kanban board
 interface KanbanBoardProps {
-  board: Board;
+  boardDoc: Board;
 }
-const KanbanBoard = ({ board }: KanbanBoardProps) => {
-  const sortedColumns: Column[] = board.columns.sort(
-    (a, b) => a.order - b.order,
-  );
+const KanbanBoard = ({ boardDoc }: KanbanBoardProps) => {
+  const { board, moveJob } = useBoard(boardDoc);
+  console.log(board);
+  const sortedColumns = board.columns;
+  // To store the updates to send to the database after the drag is complete
+  const updatesRef = useRef<
+    | {
+        jobId: string | number;
+        newColumnId: string | undefined;
+        order: number | undefined;
+      }
+    | undefined
+  >(null);
+
+  // DnD Kit
+  const [activeId, setActiveId] = useState<string | null>(null);
+
+  function handleDragStart(event: DragStartEvent) {
+    setActiveId(event.active.id as string);
+  }
+  function handleDragOver(event: DragOverEvent) {
+    const activeJobId = event.active?.id as string;
+    const targetId = event.over?.id as string;
+
+    if (!activeJobId || !targetId) return;
+
+    const activeColumn = sortedColumns.find((col) =>
+      col.jobApplications.some((job) => job._id === activeJobId),
+    );
+    const targetColumn = sortedColumns.find(
+      (col) =>
+        col._id === targetId ||
+        col.jobApplications.some((job) => job._id === targetId),
+    );
+
+    if (!activeColumn || !targetColumn) return;
+
+    // Only update state during drag if crossing columns
+    if (activeColumn._id !== targetColumn._id) {
+      updatesRef.current = moveJob(activeJobId, targetId);
+    }
+  }
+  function handleDragEnd(event: DragEndEvent) {
+    setActiveId(null);
+    const activeJobId = event.active?.id as string;
+    const targetId = event.over?.id as string;
+    if (!activeJobId || !targetId) return;
+
+    const activeColumn = sortedColumns.find((col) =>
+      col.jobApplications.some((job) => job._id === activeJobId),
+    );
+    const targetColumn = sortedColumns.find(
+      (col) =>
+        col._id === targetId ||
+        col.jobApplications.some((job) => job._id === targetId),
+    );
+
+    if (activeColumn?._id === targetColumn?._id) {
+      const result = moveJob(activeJobId, targetId);
+      if (result) {
+        updatesRef.current = result;
+      }
+    }
+    console.log("updates : ", updatesRef.current);
+    const currentUpdates = updatesRef.current;
+    if (currentUpdates) {
+      boardMutationQueue.enqueue(async () => {
+        updateJobApplication({
+          jobId: String(currentUpdates.jobId),
+          columnId: currentUpdates.newColumnId as string,
+          order: currentUpdates.order as number,
+        });
+      });
+      // Clear the ref after processing
+      updatesRef.current = undefined;
+    }
+  }
+  const activeJob = sortedColumns
+    .flatMap((col) => col.jobApplications || [])
+    .find((job) => job._id === activeId);
+  const mouseSensor = useSensor(MouseSensor, {
+    // Require the mouse to move by 10 pixels before activating
+    activationConstraint: {
+      distance: 3,
+    },
+  });
+  const touchSensor = useSensor(TouchSensor, {
+    // Press delay of 250ms, with tolerance of 5px of movement
+    activationConstraint: {
+      delay: 250,
+      tolerance: 5,
+    },
+  });
+  const sensors = useSensors(mouseSensor, touchSensor);
+
   return (
     <div className="flex gap-4 overflow-x-scroll pb-16">
-      {sortedColumns.map((col, key) => {
-        const config = COLUMN_CONFIG[key];
-        return (
-          <DroppableColumn
-            key={col._id}
-            column={col}
-            config={config}
-            columns={sortedColumns}
-            boardId={board._id}
-          ></DroppableColumn>
-        );
-      })}
+      <DndContext
+        id="kanban-board-dnd-context"
+        sensors={sensors}
+        collisionDetection={pointerWithin}
+        onDragStart={handleDragStart}
+        onDragEnd={handleDragEnd}
+        onDragOver={handleDragOver}
+      >
+        {sortedColumns.map((col, key) => {
+          const config = COLUMN_CONFIG[key];
+          return (
+            <DroppableColumn
+              key={col._id}
+              column={col}
+              config={config}
+              columns={sortedColumns}
+              boardId={board._id}
+            ></DroppableColumn>
+          );
+        })}
+        <DragOverlay>
+          {activeJob ? (
+            <div className="opacity-50">
+              <JobApplication job={activeJob} columns={sortedColumns} />
+            </div>
+          ) : null}
+        </DragOverlay>
+      </DndContext>
     </div>
   );
 };

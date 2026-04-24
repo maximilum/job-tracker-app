@@ -1,7 +1,12 @@
 "use client";
 
 import { useState } from "react";
-import { JobApplication as Job, Column } from "../../lib/models/models.types";
+import type {
+  JobApplication as Job,
+  Column,
+} from "../../lib/models/models.types";
+import { useSortable } from "@dnd-kit/sortable";
+import { CSS } from "@dnd-kit/utilities";
 import {
   deleteJobApplication,
   updateJobApplication,
@@ -11,22 +16,13 @@ import {
   CardAction,
   CardContent,
   CardDescription,
-  CardFooter,
   CardHeader,
   CardTitle,
 } from "./card";
 import {
   DropdownMenu,
   DropdownMenuContent,
-  DropdownMenuGroup,
   DropdownMenuItem,
-  DropdownMenuLabel,
-  DropdownMenuPortal,
-  DropdownMenuSeparator,
-  DropdownMenuShortcut,
-  DropdownMenuSub,
-  DropdownMenuSubContent,
-  DropdownMenuSubTrigger,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { Badge } from "@/components/ui/badge";
@@ -42,13 +38,10 @@ import {
   Dialog,
   DialogClose,
   DialogContent,
-  DialogDescription,
   DialogFooter,
   DialogHeader,
   DialogTitle,
-  DialogTrigger,
 } from "@/components/ui/dialog";
-import { getSession } from "@/lib/auth/auth";
 
 interface JobApplicationProps {
   job: Job;
@@ -72,6 +65,27 @@ const JobApplication = ({ job, columns }: JobApplicationProps) => {
   // card info expanded
   const [isExpanded, setIsExpanded] = useState<boolean>(false);
 
+  // Dnd Kit
+  const {
+    attributes,
+    listeners,
+    setNodeRef,
+    transform,
+    transition,
+    isDragging,
+  } = useSortable({
+    id: job._id.toString(),
+    data: {
+      type: "job",
+      job,
+    },
+  });
+  const style = {
+    transform: CSS.Transform.toString(transform),
+    transition,
+    opacity: isDragging ? 0.5 : 1,
+  };
+
   //   Edit Job State
   const [isOpen, setIsOpen] = useState(false);
   const [jobForm, setJobForm] = useState<jobFormInterface>({
@@ -85,7 +99,6 @@ const JobApplication = ({ job, columns }: JobApplicationProps) => {
     tags: job.tags?.join(", "),
     description: job.description,
   });
-
   async function handleDelete(jobId: string) {
     console.log(jobId);
     try {
@@ -94,7 +107,6 @@ const JobApplication = ({ job, columns }: JobApplicationProps) => {
       console.log(error);
     }
   }
-
   async function handleEditing(
     e: React.FormEvent,
     jobId: string,
@@ -109,14 +121,18 @@ const JobApplication = ({ job, columns }: JobApplicationProps) => {
         .filter((tag) => tag.length > 0),
     };
     const updates = { ...sanitizedJobForm, jobId, columnId: newColumnId };
-    updateJobApplication(updates);
+    const res = await updateJobApplication(updates);
+    if (res.success) setIsOpen(false);
   }
-
-  async function handleMoveToNewColumn(e, jobId: string, newColumnId: string) {
+  async function handleMoveToNewColumn(
+    e: React.MouseEvent,
+    jobId: string,
+    newColumnId: string,
+  ) {
     e.preventDefault();
     const updates = { jobId, columnId: newColumnId };
     console.log(updates);
-    updateJobApplication(updates);
+    await updateJobApplication(updates);
     return;
   }
 
@@ -285,131 +301,133 @@ const JobApplication = ({ job, columns }: JobApplicationProps) => {
       {/* #################################################################################### */}
       {/* #################################################################################### */}
       {/* Job */}
-      <Card
-        key={job._id}
-        className="py-2 pb-4 px-8 gap-2"
-        onClick={() => setIsExpanded(!isExpanded)}
-      >
-        <CardHeader className="p-0">
-          <div className="text-md w-full flex justify-between">
-            <CardTitle>
-              <h2
-                className=" text-primary font-semibold"
+      <div ref={setNodeRef} style={style} {...attributes} {...listeners}>
+        <Card
+          key={job._id}
+          className="py-2 pb-4 px-8 gap-2"
+          onClick={() => setIsExpanded(!isExpanded)}
+        >
+          <CardHeader className="p-0">
+            <div className="text-md w-full flex justify-between">
+              <CardTitle>
+                <h2
+                  className=" text-primary font-semibold"
+                  onClick={(e) => e.stopPropagation()}
+                >
+                  {job.position}
+                </h2>
+                <h3
+                  className="font-semibold"
+                  onClick={(e) => e.stopPropagation()}
+                >
+                  {job.company}
+                </h3>
+              </CardTitle>
+              <CardAction>
+                <DropdownMenu>
+                  <DropdownMenuTrigger asChild>
+                    <Button
+                      variant="outline"
+                      onClick={(e) => e.stopPropagation()}
+                    >
+                      <EllipsisVertical />
+                    </Button>
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent onClick={(e) => e.stopPropagation()}>
+                    <DropdownMenuItem
+                      className=""
+                      onSelect={(e) => {
+                        e.preventDefault();
+                        setIsOpen(true);
+                      }}
+                    >
+                      <div className="flex gap-4 items-center">
+                        <span>
+                          <SquarePen size={28} />
+                        </span>
+                        <p className="">Edit</p>
+                      </div>
+                    </DropdownMenuItem>
+                    {columns.map((col) => {
+                      return (
+                        <DropdownMenuItem
+                          key={col._id}
+                          onClick={(e) => {
+                            handleMoveToNewColumn(e, job._id, col._id);
+                          }}
+                        >
+                          <div>
+                            <span>Move to {col.name}</span>
+                          </div>
+                        </DropdownMenuItem>
+                      );
+                    })}
+                    <DropdownMenuItem onClick={() => handleDelete(job._id)}>
+                      <div className="flex gap-4 items-center">
+                        <span>
+                          <Trash className="text-destructive" />
+                        </span>
+                        <p className="text-destructive">Delete</p>
+                      </div>
+                    </DropdownMenuItem>
+                  </DropdownMenuContent>
+                </DropdownMenu>
+              </CardAction>
+            </div>
+          </CardHeader>
+          <CardDescription>
+            <div className="flex gap-3 text-xs text-gray-500">
+              <div
+                className="flex justify-center items-center gap-1 "
                 onClick={(e) => e.stopPropagation()}
               >
-                {job.position}
-              </h2>
-              <h3
-                className="font-semibold"
+                {job.salary && (
+                  <>
+                    <CircleDollarSign size={16} />
+                    <span>{job.salary}</span>
+                  </>
+                )}
+              </div>
+              <div
+                className="flex justify-center items-center gap-1"
                 onClick={(e) => e.stopPropagation()}
               >
-                {job.company}
-              </h3>
-            </CardTitle>
-            <CardAction>
-              <DropdownMenu>
-                <DropdownMenuTrigger asChild>
-                  <Button
-                    variant="outline"
-                    onClick={(e) => e.stopPropagation()}
-                  >
-                    <EllipsisVertical />
-                  </Button>
-                </DropdownMenuTrigger>
-                <DropdownMenuContent onClick={(e) => e.stopPropagation()}>
-                  <DropdownMenuItem
-                    className=""
-                    onSelect={(e) => {
-                      e.preventDefault();
-                      setIsOpen(true);
-                    }}
-                  >
-                    <div className="flex gap-4 items-center">
-                      <span>
-                        <SquarePen size={28} />
-                      </span>
-                      <p className="">Edit</p>
-                    </div>
-                  </DropdownMenuItem>
-                  {columns.map((col) => {
-                    return (
-                      <DropdownMenuItem
-                        key={col._id}
-                        onClick={(e) => {
-                          handleMoveToNewColumn(e, job._id, col._id);
-                        }}
-                      >
-                        <div>
-                          <span>Move to {col.name}</span>
-                        </div>
-                      </DropdownMenuItem>
-                    );
-                  })}
-                  <DropdownMenuItem onClick={() => handleDelete(job._id)}>
-                    <div className="flex gap-4 items-center">
-                      <span>
-                        <Trash className="text-destructive" />
-                      </span>
-                      <p className="text-destructive">Delete</p>
-                    </div>
-                  </DropdownMenuItem>
-                </DropdownMenuContent>
-              </DropdownMenu>
-            </CardAction>
-          </div>
-        </CardHeader>
-        <CardDescription>
-          <div className="flex gap-3 text-xs text-gray-500">
+                {job.location && (
+                  <>
+                    <LocateFixed size={16} />
+                    <span>{job.location}</span>
+                  </>
+                )}
+              </div>
+              <div className="flex gap-1"></div>
+            </div>
+          </CardDescription>
+          <CardContent className="px-0">
             <div
-              className="flex justify-center items-center gap-1 "
-              onClick={(e) => e.stopPropagation()}
+              className={`grid transition-all duration-300 ${isExpanded ? "grid-rows-[1fr]" : "grid-rows-[0fr]"} my-4`}
             >
-              {job.salary && (
-                <>
-                  <CircleDollarSign size={16} />
-                  <span>{job.salary}</span>
-                </>
-              )}
+              <div className="overflow-hidden text-xs">
+                <p className="border-l-2 border-sky-200 pl-4 italic mb-8">
+                  {job.description}
+                </p>
+                {job.notes && <p className="">{job.notes}</p>}
+              </div>
             </div>
-            <div
-              className="flex justify-center items-center gap-1"
-              onClick={(e) => e.stopPropagation()}
-            >
-              {job.location && (
-                <>
-                  <LocateFixed size={16} />
-                  <span>{job.location}</span>
-                </>
-              )}
+            <div className="flex gap-2 p-0 flex-wrap">
+              {job.tags?.map((tag) => (
+                <Badge
+                  key={tag}
+                  variant="outline"
+                  className="hover:bg-accent"
+                  onClick={(e) => e.stopPropagation()}
+                >
+                  {tag}
+                </Badge>
+              ))}
             </div>
-            <div className="flex gap-1"></div>
-          </div>
-        </CardDescription>
-        <CardContent className="px-0">
-          <div
-            className={`grid transition-all duration-300 ${isExpanded ? "grid-rows-[1fr]" : "grid-rows-[0fr]"} my-4`}
-          >
-            <div className="overflow-hidden text-xs">
-              <p className="border-l-2 border-sky-200 pl-4 italic mb-8">
-                {job.description}
-              </p>
-              {job.notes && <p className="">{job.notes}</p>}
-            </div>
-          </div>
-          <div className="flex gap-2 p-0 flex-wrap">
-            {job.tags?.map((tag) => (
-              <Badge
-                key={tag}
-                variant="outline"
-                className="hover:bg-accent"
-                onClick={(e) => e.stopPropagation()}
-              >
-                {tag}
-              </Badge>
-            ))}
-          </div>
-        </CardContent>
-      </Card>
+          </CardContent>
+        </Card>
+      </div>
     </>
   );
 };
