@@ -29,7 +29,7 @@ const DashboardComponent = async () => {
 
   return (
     <div>
-      <div className=" w-full h-[calc(100vh-52px)]  py-12 px-36 ">
+      <div className=" w-full h-[calc(100vh-52px)]  py-4 px-4 lg:py-12 lg:px-36 ">
         <div className=" w-full h-full">
           <h1 className=" text-2xl mb-8">
             {board.name}
