@@ -1,9 +1,12 @@
 "use client";
 
-import { useState } from "react";
+import { useRef, useState } from "react";
 import { Board, Column } from "../lib/models/models.types";
 import { Card, CardContent, CardHeader, CardTitle } from "./ui/card";
-import { createJobApplication } from "@/actions/jobApplication";
+import {
+  createJobApplication,
+  updateJobApplication,
+} from "@/actions/jobApplication";
 import { useSession } from "../lib/auth/auth-client";
 import {
   MouseSensor,
@@ -52,6 +55,7 @@ import {
 } from "@dnd-kit/sortable";
 import { useBoard } from "@/hooks/useBoard";
 import JobApplicationModel from "@/lib/models/JobApplication.model";
+import boardMutationQueue from "@/lib/mutationQueue";
 
 interface ColConfig {
   color: string;
@@ -414,8 +418,18 @@ interface KanbanBoardProps {
 }
 const KanbanBoard = ({ boardDoc }: KanbanBoardProps) => {
   const { board, moveJob } = useBoard(boardDoc);
+  console.log(board);
   const sortedColumns = board.columns;
-  
+  // To store the updates to send to the database after the drag is complete
+  const updatesRef = useRef<
+    | {
+        jobId: string | number;
+        newColumnId: string | undefined;
+        order: number | undefined;
+      }
+    | undefined
+  >(null);
+
   // DnD Kit
   const [activeId, setActiveId] = useState<string | null>(null);
 
@@ -423,22 +437,61 @@ const KanbanBoard = ({ boardDoc }: KanbanBoardProps) => {
     setActiveId(event.active.id as string);
   }
   function handleDragOver(event: DragOverEvent) {
-    // setActiveId(null);
-    // const activeJobId = event.active?.id;
-    // const targrtId = event.over?.id;
+    const activeJobId = event.active?.id as string;
+    const targetId = event.over?.id as string;
 
-    // if (!activeJobId || !targrtId) return;
+    if (!activeJobId || !targetId) return;
 
-    // moveJob(activeJobId, targrtId);
+    const activeColumn = sortedColumns.find((col) =>
+      col.jobApplications.some((job) => job._id === activeJobId),
+    );
+    const targetColumn = sortedColumns.find(
+      (col) =>
+        col._id === targetId ||
+        col.jobApplications.some((job) => job._id === targetId),
+    );
+
+    if (!activeColumn || !targetColumn) return;
+
+    // Only update state during drag if crossing columns
+    if (activeColumn._id !== targetColumn._id) {
+      updatesRef.current = moveJob(activeJobId, targetId);
+    }
   }
   function handleDragEnd(event: DragEndEvent) {
     setActiveId(null);
-    const activeJobId = event.active?.id;
-    const targrtId = event.over?.id;
+    const activeJobId = event.active?.id as string;
+    const targetId = event.over?.id as string;
+    if (!activeJobId || !targetId) return;
 
-    if (!activeJobId || !targrtId) return;
+    const activeColumn = sortedColumns.find((col) =>
+      col.jobApplications.some((job) => job._id === activeJobId),
+    );
+    const targetColumn = sortedColumns.find(
+      (col) =>
+        col._id === targetId ||
+        col.jobApplications.some((job) => job._id === targetId),
+    );
 
-    moveJob(activeJobId, targrtId);
+    if (activeColumn?._id === targetColumn?._id) {
+      const result = moveJob(activeJobId, targetId);
+      if (result) {
+        updatesRef.current = result;
+      }
+    }
+    console.log("updates : ", updatesRef.current);
+    const currentUpdates = updatesRef.current;
+    if (currentUpdates) {
+      boardMutationQueue.enqueue(async () => {
+        updateJobApplication({
+          jobId: String(currentUpdates.jobId),
+          columnId: currentUpdates.newColumnId as string,
+          order: currentUpdates.order as number,
+        });
+      });
+      // Clear the ref after processing
+      updatesRef.current = undefined;
+    }
   }
   const activeJob = sortedColumns
     .flatMap((col) => col.jobApplications || [])

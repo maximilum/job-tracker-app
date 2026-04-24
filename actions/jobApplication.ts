@@ -8,7 +8,12 @@ import { Column } from "@/lib/models";
 import { JobApplication } from "@/lib/models";
 import { revalidatePath } from "next/cache";
 
-export async function createJobApplication(job: JobI) {
+// ######################################################################################
+//  Create job
+// ######################################################################################
+export async function createJobApplication(
+  job: Omit<JobI, "_id" | "order" | "userId"> & { userId?: string },
+) {
   console.log("starting the creating process");
 
   // check for rquired data
@@ -22,24 +27,22 @@ export async function createJobApplication(job: JobI) {
     console.log("Missing required data");
     return { error: "Missing required data" };
   }
-  await connectDB();
-  console.log("test");
-
-  //   Check if column exists
-  const column = await Column.findOne({ _id: job.columnId });
-  if (!column) {
-    return { error: "Column not found" };
-  }
-
   // check authorization
   const session = await getSession();
   if (!session?.user) {
     console.log("unauthorized");
     return { error: "Unauthorized" };
   }
-
-  //   reasign th euser id
+  //   reassign the user id
   job.userId = session.user.id;
+
+  await connectDB();
+
+  //   Check if column exists
+  const column = await Column.findOne({ _id: job.columnId });
+  if (!column) {
+    return { error: "Column not found" };
+  }
 
   // Chech if board belongs to user
   console.log(job.boardId);
@@ -48,7 +51,7 @@ export async function createJobApplication(job: JobI) {
     console.log("Board not found");
     return { error: "Board not found" };
   }
-  if (board.userId !== session.user.id) {
+  if (board.userId.toString() !== session.user.id) {
     console.log("Board Doesn't belong to user");
     return { error: "Board Doesn't belong to user" };
   }
@@ -58,19 +61,15 @@ export async function createJobApplication(job: JobI) {
 
   // Calculate the order
   const count = await JobApplication.countDocuments({ columnId: job.columnId });
-  const index = count;
-  const order = index ;
+  const order = count;
 
   //assign new order
   jobApplication.order = order;
   const res = await jobApplication.save();
-  console.log(res);
 
   // add job to column
   column.jobApplications.push(jobApplication._id);
   await column.save();
-
-  //   Update orders
 
   revalidatePath("/dashboard");
   return {
@@ -79,6 +78,9 @@ export async function createJobApplication(job: JobI) {
   };
 }
 
+// ######################################################################################
+//  Delete job
+// ######################################################################################
 export async function deleteJobApplication(jobId: string) {
   const session = await getSession();
   const userId = session?.user?.id;
@@ -89,15 +91,12 @@ export async function deleteJobApplication(jobId: string) {
   await connectDB();
 
   try {
-    const jobApplication = await JobApplication.findOne({ _id: jobId });
-    console.log(jobApplication);
+    const jobApplication = await JobApplication.findOne({
+      _id: jobId,
+      userId: userId,
+    });
 
     if (!jobApplication) {
-      return { error: "Job application not found" };
-    }
-
-    if (jobApplication.userId.toString() !== userId.toString()) {
-      console.log("Unauthorized!");
       return { error: "Unauthorized!" };
     }
 
@@ -114,6 +113,9 @@ export async function deleteJobApplication(jobId: string) {
   }
 }
 
+// ######################################################################################
+//  Update job
+// ######################################################################################
 type Updates = Partial<{
   jobId: string;
   company: string;
@@ -134,10 +136,8 @@ type Updates = Partial<{
 export async function updateJobApplication(updates: Updates) {
   // destructuring updates
   const { jobId, columnId: newColumnId, order, ...restOfUpdates } = updates;
-  console.log("jobId: ", jobId);
-  console.log("newColumnId: ", newColumnId);
-  console.log("order: ", order);
-  console.log("restOfUpdates: ", restOfUpdates);
+
+  if (!newColumnId || !jobId) return { error: "Invalid update data" };
 
   // Authorization
   const session = await getSession();
@@ -176,22 +176,81 @@ export async function updateJobApplication(updates: Updates) {
 
   //   Preparing Variables for updates
   let newOrder: number;
-  let UpdatesToApply: Updates = {};
+  let updatesToApply: Updates = {};
 
   if (order !== undefined && order !== null) {
     // Check the original column Id
-    const originalColumnId = originalJobApplication.columnId;
-    console.log("original column id: ", originalColumnId);
+    const originalColumnId = originalJobApplication.columnId.toString();
     if (newColumnId !== originalColumnId) {
       // 1- dragging to a different column
+      const jobsInNewColumnId = await JobApplication.find({
+        columnId: newColumnId,
+      })
+        .sort({ order: 1 })
+        .select("_id");
+      const jobsInNewColumnToShiftDown = jobsInNewColumnId
+        .slice(order)
+        .map((job) => job._id.toString());
+      await JobApplication.updateMany(
+        {
+          _id: { $in: jobsInNewColumnToShiftDown },
+        },
+        { $inc: { order: 1 } },
+      );
+      updatesToApply = { order, columnId: newColumnId };
+      // pull id from original column
+      if (jobId) {
+        await Column.findOneAndUpdate(
+          { _id: originalColumnId },
+          { $pull: { jobApplications: jobId } },
+        );
+        // push id to new column
+        await Column.findOneAndUpdate(
+          { _id: newColumnId },
+          { $push: { jobApplications: jobId } },
+        );
+      }
     } else if (newColumnId === originalColumnId) {
       // 2- dragging in the same column
+      // Fetch the actual jobs from the database sorted by their order
+      const jobsInColumnId = await JobApplication.find({
+        columnId: originalColumnId,
+      })
+        .sort({ order: 1 })
+        .select("_id");
+
+      const originalIndex = jobsInColumnId.findIndex(
+        (job) => job._id.toString() === jobId,
+      );
+
+      // 2.1 dragging up
+      if (originalIndex > order) {
+        const jobsToIncOrder = jobsInColumnId
+          .slice(order, originalIndex)
+          .map((job) => job._id.toString());
+        await JobApplication.updateMany(
+          { _id: { $in: jobsToIncOrder } },
+          { $inc: { order: 1 } },
+        );
+      }
+      // 2.2 dragging down
+      else if (originalIndex < order) {
+        const jobsToDecOrder = jobsInColumnId
+          .slice(originalIndex + 1, order + 1)
+          .map((job) => job._id.toString());
+        await JobApplication.updateMany(
+          { _id: { $in: jobsToDecOrder } },
+          { $inc: { order: -1 } },
+        );
+      }
+
+      // Add the final update for the dragged job itself
+      updatesToApply = { order };
     }
   } else if (order === undefined || order === null) {
     // Check the original column Id
     const originalColumnId = originalJobApplication.columnId.toString();
     if (newColumnId !== originalColumnId.toString()) {
-      console.log("moving menu");
       // 3- moving
       // $$$$$ moving from menu logic $$$$$
       //     * remove from the original column
@@ -210,11 +269,13 @@ export async function updateJobApplication(updates: Updates) {
         .select("_id order");
       //                 calculate order from all jobs "Findindex"
       const originalIndex = originalJobs.findIndex(
-        (job) => job._id.toString() === jobId
+        (job) => job._id.toString() === jobId,
       );
       //             # get the remaining jop applications docs
       //                 filter the moved job from all jobs "sorted"
-      const remainingJobs = originalJobs.filter((job) => job._id !== jobId);
+      const remainingJobs = originalJobs.filter(
+        (job) => job._id.toString() !== jobId.toString(),
+      );
       //             # slice using the order
       const jobsToMove = remainingJobs.slice(originalIndex);
       const jobsToMoveIds = jobsToMove.map((job) => job._id);
@@ -230,24 +291,19 @@ export async function updateJobApplication(updates: Updates) {
         { $push: { jobApplications: jobId } },
       );
       //     * calculate the new order "last"
-      //         - get the new column
-      const newJobs: { _id: string }[] = await JobApplication.find({
-        columnId: newColumnId,
-      }).select("_id");
       //         - get the jobs length
       //         - new order = length
-      newOrder = newJobs.length;
-      UpdatesToApply = { order: newOrder, columnId: newColumnId };
+      newOrder = await JobApplication.countDocuments({ columnId: newColumnId });
+      updatesToApply = { order: newOrder, columnId: newColumnId };
     } else if (newColumnId === originalColumnId) {
-      console.log("Editing");
       // 4- editing
-      UpdatesToApply = { ...restOfUpdates };
+      const { userId, boardId, ...safeUpdates } = restOfUpdates;
+      updatesToApply = safeUpdates;
     }
   }
 
   //  ########### FINAL UPDATE ################################
-
-  await JobApplication.updateOne({ _id: jobId }, UpdatesToApply);
+  await JobApplication.updateOne({ _id: jobId }, updatesToApply);
   revalidatePath("/dashboard");
   return { success: true };
 }

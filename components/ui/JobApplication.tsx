@@ -121,7 +121,8 @@ const JobApplication = ({ job, columns }: JobApplicationProps) => {
         .filter((tag) => tag.length > 0),
     };
     const updates = { ...sanitizedJobForm, jobId, columnId: newColumnId };
-    await updateJobApplication(updates);
+    const res = await updateJobApplication(updates);
+    if (res.success) setIsOpen(false);
   }
   async function handleMoveToNewColumn(
     e: React.MouseEvent,
