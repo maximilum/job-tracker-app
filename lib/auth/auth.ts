@@ -10,7 +10,7 @@ const client = mongooseInstance.connection.getClient();
 const db = client.db();
 
 export const auth = betterAuth({
-   trustedOrigins: ["https://job-tracker-app-eta-one.vercel.app"],
+  trustedOrigins: ["https://job-tracker-app-eta-one.vercel.app"],
   database: mongodbAdapter(db, {
     client,
   }),
