@@ -37,7 +37,7 @@ const HeroImagesSection = () => {
         <div className="max-w-5xl mx-auto overflow-hidden border border-border shadow-lg">
           {activeTab === "organize" && (
             <Image
-              src="/hero-images/hero1.png"
+              src="/hero-images/newhero1.png"
               alt="Organize Applications"
               width={1200}
               height={800}
@@ -45,7 +45,7 @@ const HeroImagesSection = () => {
           )}
           {activeTab === "hire" && (
             <Image
-              src="/hero-images/hero2.png"
+              src="/hero-images/newhero2.png"
               alt="Organize Applications"
               width={1200}
               height={800}
@@ -53,7 +53,7 @@ const HeroImagesSection = () => {
           )}
           {activeTab === "board" && (
             <Image
-              src="/hero-images/hero3.png"
+              src="/hero-images/newhero3.png"
               alt="Organize Applications"
               width={1200}
               height={800}
