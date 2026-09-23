@@ -5,7 +5,6 @@ export interface IColumn {
   boardId: mongoose.Types.ObjectId;
   order: number;
   userId: string;
-  jobApplications: mongoose.Types.ObjectId[];
   createdAt: Date;
   updatedAt: Date;
 }
@@ -30,12 +29,6 @@ const columnSchema = new Schema<IColumn>(
       required: true,
       index: true,
     },
-    jobApplications: [
-      {
-        type: Schema.Types.ObjectId,
-        ref: "JobApplication",
-      },
-    ],
   },
   {
     timestamps: true,
