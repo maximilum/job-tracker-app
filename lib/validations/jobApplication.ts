@@ -10,7 +10,7 @@ export const createJobApplicationSchema = z.object({
   notes: z.string().trim().optional(),
   salary: z.string().trim().optional(),
   jobUrl: z.string().trim().optional(),
-  tags: z.array(z.string().trim()).optional().default([]),
+  tags: z.array(z.string().trim()).optional(),
   description: z.string().trim().optional(),
   appliedDate: z.coerce.date().optional(),
 });

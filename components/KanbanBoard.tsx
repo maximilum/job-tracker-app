@@ -117,12 +117,14 @@ const DroppableColumn = ({
     setError("");
     setIsSubmitting(true);
     try {
+      const tags = formData.tags
+        ?.split(",")
+        .map((tag) => tag.trim())
+        .filter((tag) => tag.length > 0);
+
       const sanitizedJobForm = {
         ...formData,
-        tags: formData.tags
-          ?.split(",")
-          .map((tag) => tag.trim())
-          .filter((tag) => tag.length > 0),
+        tags: tags && tags.length > 0 ? tags : undefined,
         boardId: boardId,
         columnId: column._id,
       };

@@ -4,8 +4,46 @@ import connectDB from "../db";
 import { headers } from "next/headers";
 import { redirect } from "next/navigation";
 import initUserBoard from "../init_user_board";
+import type { Db, MongoClient } from "mongodb";
 
-type AuthInstance = ReturnType<typeof betterAuth>;
+function createAuth(db: Db, client: MongoClient) {
+  const trustedOrigins = [
+    "https://job-tracker-app-eta-one.vercel.app",
+    process.env.BETTER_AUTH_URL,
+    process.env.VERCEL_URL ? `https://${process.env.VERCEL_URL}` : undefined,
+    "http://localhost:3000",
+    "http://localhost:3001",
+  ].filter(Boolean) as string[];
+
+  return betterAuth({
+    trustedOrigins,
+    database: mongodbAdapter(db, {
+      client,
+    }),
+    emailAndPassword: {
+      enabled: true,
+    },
+    session: {
+      cookieCache: {
+        enabled: true,
+        maxAge: 5 * 60, // Cache duration in seconds
+      },
+    },
+    databaseHooks: {
+      user: {
+        create: {
+          after: async (user) => {
+            if (user) {
+              await initUserBoard(user.id);
+            }
+          },
+        },
+      },
+    },
+  });
+}
+
+type AuthInstance = ReturnType<typeof createAuth>;
 
 let authInstance: AuthInstance | null = null;
 let authPromise: Promise<AuthInstance> | null = null;
@@ -17,45 +55,9 @@ export async function getAuth(): Promise<AuthInstance> {
   if (!authPromise) {
     authPromise = (async () => {
       const mongooseInstance = await connectDB();
-      const client = mongooseInstance.connection.getClient();
+      const client = mongooseInstance.connection.getClient() as unknown as MongoClient;
       const db = client.db();
-
-      // Dynamic trusted origins supporting localhost and Vercel previews (Fixes Addendum #6)
-      const trustedOrigins = [
-        "https://job-tracker-app-eta-one.vercel.app",
-        process.env.BETTER_AUTH_URL,
-        process.env.VERCEL_URL ? `https://${process.env.VERCEL_URL}` : undefined,
-        "http://localhost:3000",
-        "http://localhost:3001",
-      ].filter(Boolean) as string[];
-
-      authInstance = betterAuth({
-        trustedOrigins,
-        database: mongodbAdapter(db, {
-          client,
-        }),
-        emailAndPassword: {
-          enabled: true,
-        },
-        session: {
-          cookieCache: {
-            enabled: true,
-            maxAge: 5 * 60, // Cache duration in seconds
-          },
-        },
-        databaseHooks: {
-          user: {
-            create: {
-              after: async (user) => {
-                if (user) {
-                  await initUserBoard(user.id);
-                }
-              },
-            },
-          },
-        },
-      });
-
+      authInstance = createAuth(db, client);
       return authInstance;
     })();
   }
