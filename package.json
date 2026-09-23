@@ -9,7 +9,8 @@
     "lint": "eslint",
     "test": "vitest run",
     "test:watch": "vitest",
-    "seed": " tsx --env-file=.env ./scripts/seed.ts"
+    "seed": " tsx --env-file=.env ./scripts/seed.ts",
+    "repair-orders": "tsx --env-file=.env ./scripts/repair_orders.ts"
   },
   "dependencies": {
     "@dnd-kit/core": "^6.3.1",
