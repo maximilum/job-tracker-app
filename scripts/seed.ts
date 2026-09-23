@@ -2,8 +2,7 @@ import connectDB from "../lib/db";
 import "@/lib/models";
 import { Board, Column, JobApplication } from "@/lib/models";
 
-// const USER_ID = "6929e34361b6f083d154859d";
-const USER_ID = "69e0156b6c9fad3459d8d508";
+const USER_ID = process.env.USER_ID || "69e0156b6c9fad3459d8d508";
 
 const SAMPLE_JOBS = [
   // Wish List
@@ -235,7 +234,7 @@ async function seed() {
 
       for (let i = 0; i < jobs.length; i++) {
         const jobData = jobs[i];
-        const jobApplication = await JobApplication.create({
+        await JobApplication.create({
           company: jobData.company,
           position: jobData.position,
           location: jobData.location,
@@ -250,11 +249,9 @@ async function seed() {
           order: i,
         });
 
-        column.jobApplications.push(jobApplication._id);
         totalCreated++;
       }
 
-      await column.save();
       console.log(`✅ Added ${jobs.length} jobs to "${columnName}" column`);
     }
 
@@ -270,4 +267,9 @@ async function seed() {
   }
 }
 
-seed();
+seed()
+  .then(() => process.exit(0))
+  .catch((err) => {
+    console.error(err);
+    process.exit(1);
+  });

@@ -28,13 +28,12 @@ const SignUp = () => {
       const result = await signUp.email({ name, email, password });
 
       if (result.error) {
-        console.log(result);
         setError(result.error?.message ?? "Something went wrong");
       } else {
         Router.push("/dashboard");
       }
-    } catch (error) {
-      setError("an unexpected error occurred");
+    } catch {
+      setError("An unexpected error occurred");
     } finally {
       setIsLoading(false);
     }

@@ -32,8 +32,8 @@ const SignIn = () => {
       } else {
         Router.push("/dashboard");
       }
-    } catch (error) {
-      setError("an unexpected error occurred");
+    } catch {
+      setError("An unexpected error occurred");
     } finally {
       setIsLoading(false);
     }

@@ -5,7 +5,7 @@ export interface IBoard {
   userId: string;
   columns: mongoose.Types.ObjectId[];
   createdAt: Date;
-  udatedAt: Date;
+  updatedAt: Date;
 }
 
 const BoardSchema = new mongoose.Schema<IBoard>(

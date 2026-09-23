@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import type {
   JobApplication as Job,
   Column,
@@ -39,28 +39,15 @@ import {
 import { Button } from "./button";
 import {
   Dialog,
-  DialogClose,
   DialogContent,
-  DialogFooter,
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
+import JobForm, { JobFormData } from "../JobForm";
 
 interface JobApplicationProps {
   job: Job;
   columns: Column[];
-}
-
-interface JobFormInterface {
-  company: string;
-  position: string;
-  location?: string;
-  status: string;
-  notes?: string;
-  salary?: string;
-  jobUrl?: string;
-  tags?: string;
-  description?: string;
 }
 
 const JobApplication = ({ job, columns }: JobApplicationProps) => {
@@ -88,36 +75,15 @@ const JobApplication = ({ job, columns }: JobApplicationProps) => {
     opacity: isDragging ? 0.4 : 1,
   };
 
-  // Edit Job State & sync with props (Fixes Bug 5.5)
+  // Edit Job Dialog state with unified JobForm (Fixes Bug 5.5)
   const [isOpen, setIsOpen] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [jobForm, setJobForm] = useState<JobFormInterface>({
-    company: job.company,
-    position: job.position,
-    location: job.location,
-    status: job.status,
-    notes: job.notes,
-    salary: job.salary,
-    jobUrl: job.jobUrl,
-    tags: job.tags?.join(", "),
-    description: job.description,
-  });
-
-  useEffect(() => {
-    setJobForm({
-      company: job.company,
-      position: job.position,
-      location: job.location,
-      status: job.status,
-      notes: job.notes,
-      salary: job.salary,
-      jobUrl: job.jobUrl,
-      tags: job.tags?.join(", "),
-      description: job.description,
-    });
-  }, [job]);
+  const [editError, setEditError] = useState("");
 
   function handleDelete(jobId: string) {
+    if (typeof window !== "undefined" && !window.confirm("Are you sure you want to delete this job application?")) {
+      return;
+    }
     boardMutationQueue.enqueue(
       async () => {
         await deleteJobApplication(jobId);
@@ -126,21 +92,23 @@ const JobApplication = ({ job, columns }: JobApplicationProps) => {
     );
   }
 
-  async function handleEditing(e: React.FormEvent, jobId: string) {
-    e.preventDefault();
+  async function handleEditing(formData: JobFormData) {
     setIsSubmitting(true);
+    setEditError("");
     try {
       const sanitizedJobForm = {
-        ...jobForm,
-        tags: jobForm.tags
+        ...formData,
+        tags: formData.tags
           ?.split(",")
           .map((tag) => tag.trim())
           .filter((tag) => tag.length > 0),
       };
 
-      const res = await updateJobFields({ jobId, ...sanitizedJobForm });
+      const res = await updateJobFields({ jobId: job._id, ...sanitizedJobForm });
       if (res.success) {
         setIsOpen(false);
+      } else {
+        setEditError(res.error.message);
       }
     } finally {
       setIsSubmitting(false);
@@ -166,189 +134,29 @@ const JobApplication = ({ job, columns }: JobApplicationProps) => {
       {/* Pop Up Editing Dialog */}
       <Dialog open={isOpen} onOpenChange={setIsOpen}>
         <DialogContent className="sm:max-w-xl w-[95vw] max-h-[90vh] overflow-y-auto">
-          <form onSubmit={(e) => void handleEditing(e, job._id)}>
-            <DialogHeader>
-              <DialogTitle>Edit Job Details</DialogTitle>
-            </DialogHeader>
+          <DialogHeader className="mb-2">
+            <DialogTitle>Edit Job Details</DialogTitle>
+          </DialogHeader>
 
-            <div className="mt-4">
-              <div className="grid grid-cols-1 md:grid-cols-2 justify-center items-start gap-4">
-                {/* Company */}
-                <div className="flex flex-col sm:flex-row gap-1 sm:gap-2 sm:items-center">
-                  <label htmlFor="company" className="w-24 shrink-0 text-sm">
-                    Company*
-                  </label>
-                  <input
-                    required
-                    value={jobForm.company}
-                    onChange={(e) =>
-                      setJobForm({ ...jobForm, company: e.target.value })
-                    }
-                    className="border rounded px-2 py-1 w-full text-sm"
-                    name="company"
-                    type="text"
-                    placeholder="Apple, Google, ..."
-                  />
-                </div>
-
-                {/* Position */}
-                <div className="flex flex-col sm:flex-row gap-1 sm:gap-2 sm:items-center">
-                  <label htmlFor="position" className="w-24 shrink-0 text-sm">
-                    Position*
-                  </label>
-                  <input
-                    required
-                    value={jobForm.position}
-                    onChange={(e) =>
-                      setJobForm({ ...jobForm, position: e.target.value })
-                    }
-                    name="position"
-                    type="text"
-                    className="border rounded px-2 py-1 w-full text-sm"
-                    placeholder="Software Engineer"
-                  />
-                </div>
-
-                {/* Location */}
-                <div className="flex flex-col sm:flex-row gap-1 sm:gap-2 sm:items-center">
-                  <label htmlFor="location" className="w-24 shrink-0 text-sm">
-                    Location
-                  </label>
-                  <input
-                    value={jobForm.location || ""}
-                    onChange={(e) =>
-                      setJobForm({ ...jobForm, location: e.target.value })
-                    }
-                    name="location"
-                    type="text"
-                    className="border rounded px-2 py-1 w-full text-sm"
-                    placeholder="Riyadh, Remote, ..."
-                  />
-                </div>
-
-                {/* Status */}
-                <div className="flex flex-col sm:flex-row gap-1 sm:gap-2 sm:items-center">
-                  <label htmlFor="status" className="w-24 shrink-0 text-sm">
-                    Status
-                  </label>
-                  <input
-                    value={jobForm.status}
-                    onChange={(e) =>
-                      setJobForm({ ...jobForm, status: e.target.value })
-                    }
-                    name="status"
-                    type="text"
-                    className="border rounded px-2 py-1 w-full text-sm"
-                    placeholder="applied"
-                  />
-                </div>
-
-                {/* Salary */}
-                <div className="flex flex-col sm:flex-row gap-1 sm:gap-2 sm:items-center">
-                  <label htmlFor="salary" className="w-24 shrink-0 text-sm">
-                    Salary
-                  </label>
-                  <input
-                    value={jobForm.salary || ""}
-                    onChange={(e) =>
-                      setJobForm({ ...jobForm, salary: e.target.value })
-                    }
-                    type="text"
-                    name="salary"
-                    className="border rounded px-2 py-1 w-full text-sm"
-                    placeholder="10k - 15k"
-                  />
-                </div>
-              </div>
-
-              {/* Tags Section */}
-              <div className="flex flex-col sm:flex-row gap-1 sm:gap-2 sm:items-start my-4">
-                <label htmlFor="tags" className="w-24 shrink-0 sm:mt-1 text-sm">
-                  Tags
-                </label>
-                <div className="w-full">
-                  <input
-                    value={jobForm.tags || ""}
-                    onChange={(e) =>
-                      setJobForm({
-                        ...jobForm,
-                        tags: e.target.value,
-                      })
-                    }
-                    type="text"
-                    placeholder="React, Next.js, Frontend"
-                    name="tags"
-                    className="border rounded px-2 py-1 w-full text-sm"
-                  />
-                  <p className="text-xs text-muted-foreground mt-1">
-                    Separate tags with commas
-                  </p>
-                </div>
-              </div>
-
-              {/* URL */}
-              <div className="flex flex-col sm:flex-row gap-1 sm:gap-2 sm:items-center my-4">
-                <label htmlFor="url" className="w-24 shrink-0 text-sm">
-                  Job URL
-                </label>
-                <input
-                  value={jobForm.jobUrl || ""}
-                  onChange={(e) =>
-                    setJobForm({ ...jobForm, jobUrl: e.target.value })
-                  }
-                  type="text"
-                  name="url"
-                  className="border rounded px-2 py-1 w-full text-sm"
-                  placeholder="https://..."
-                />
-              </div>
-
-              {/* Description */}
-              <div className="flex flex-col sm:flex-row gap-1 sm:gap-2 sm:items-start my-4">
-                <label htmlFor="description" className="w-24 shrink-0 sm:mt-1 text-sm">
-                  Description
-                </label>
-                <textarea
-                  value={jobForm.description || ""}
-                  onChange={(e) =>
-                    setJobForm({ ...jobForm, description: e.target.value })
-                  }
-                  name="description"
-                  className="border rounded px-2 py-1 w-full text-sm"
-                  rows={3}
-                  placeholder="Job details, requirements, etc."
-                />
-              </div>
-
-              {/* Notes */}
-              <div className="flex flex-col sm:flex-row gap-1 sm:gap-2 sm:items-start my-4">
-                <label htmlFor="notes" className="w-24 shrink-0 sm:mt-1 text-sm">
-                  Notes
-                </label>
-                <textarea
-                  value={jobForm.notes || ""}
-                  onChange={(e) =>
-                    setJobForm({ ...jobForm, notes: e.target.value })
-                  }
-                  name="notes"
-                  className="border rounded px-2 py-1 w-full text-sm"
-                  rows={2}
-                  placeholder="Recruiter contact, interview prep..."
-                />
-              </div>
-            </div>
-
-            <DialogFooter className="flex-col-reverse sm:flex-row sm:justify-end gap-2 mt-4">
-              <DialogClose asChild>
-                <Button variant="outline" type="button">
-                  Cancel
-                </Button>
-              </DialogClose>
-              <Button type="submit" disabled={isSubmitting}>
-                {isSubmitting ? "Saving..." : "Save Changes"}
-              </Button>
-            </DialogFooter>
-          </form>
+          <JobForm
+            key={job._id}
+            initialData={{
+              company: job.company,
+              position: job.position,
+              location: job.location,
+              status: job.status,
+              notes: job.notes,
+              salary: job.salary,
+              jobUrl: job.jobUrl,
+              tags: job.tags?.join(", "),
+              description: job.description,
+            }}
+            submitLabel="Save Changes"
+            isSubmitting={isSubmitting}
+            error={editError}
+            onCancel={() => setIsOpen(false)}
+            onSubmit={handleEditing}
+          />
         </DialogContent>
       </Dialog>
 

@@ -7,7 +7,6 @@ import {
   createJobApplication,
   moveJobToColumn,
 } from "@/actions/jobApplication";
-
 import {
   MouseSensor,
   TouchSensor,
@@ -33,9 +32,7 @@ import {
 } from "lucide-react";
 import {
   Dialog,
-  DialogClose,
   DialogContent,
-  DialogFooter,
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
@@ -48,6 +45,7 @@ import {
 import { Button } from "./ui/button";
 import JobApplication from "../components/ui/JobApplication";
 import JobApplicationCard from "../components/ui/JobApplicationCard";
+import JobForm, { JobFormData } from "./JobForm";
 import {
   SortableContext,
   verticalListSortingStrategy,
@@ -91,18 +89,6 @@ interface DroppableColumnProps {
   boardId: string;
 }
 
-interface JobFormInterface {
-  company: string;
-  position: string;
-  location?: string;
-  status: string;
-  notes?: string;
-  salary?: string;
-  jobUrl?: string;
-  tags?: string;
-  description?: string;
-}
-
 //  ####################################################################################
 // Droppable Column
 //  ####################################################################################
@@ -115,7 +101,6 @@ const DroppableColumn = ({
   // Avoid reassigning prop parameter (Fixes Bug 5.6)
   const otherColumns = columns.filter((col) => col._id !== column._id);
 
-  // Dnd kit droppable
   const { setNodeRef } = useDroppable({
     id: column._id,
     data: {
@@ -127,26 +112,14 @@ const DroppableColumn = ({
   const [isOpen, setIsOpen] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState("");
-  const [jobForm, setJobForm] = useState<JobFormInterface>({
-    company: "",
-    position: "",
-    location: "",
-    status: "applied",
-    notes: "",
-    salary: "",
-    jobUrl: "",
-    tags: "",
-    description: "",
-  });
 
-  async function handleSubmit(e: React.FormEvent) {
-    e.preventDefault();
+  async function handleSubmit(formData: JobFormData) {
     setError("");
     setIsSubmitting(true);
     try {
       const sanitizedJobForm = {
-        ...jobForm,
-        tags: jobForm.tags
+        ...formData,
+        tags: formData.tags
           ?.split(",")
           .map((tag) => tag.trim())
           .filter((tag) => tag.length > 0),
@@ -158,17 +131,6 @@ const DroppableColumn = ({
       if (!res.success) {
         setError(res.error.message);
       } else {
-        setJobForm({
-          company: "",
-          position: "",
-          location: "",
-          status: "applied",
-          notes: "",
-          salary: "",
-          jobUrl: "",
-          tags: "",
-          description: "",
-        });
         setIsOpen(false);
       }
     } finally {
@@ -178,189 +140,20 @@ const DroppableColumn = ({
 
   return (
     <Card className="p-0 min-w-80 md:min-w-96 h-full flex flex-col">
-      {/* Column -> Add Job Dialog */}
+      {/* Column -> Add Job Dialog with Unified JobForm (Fixes Bug 5.5) */}
       <Dialog open={isOpen} onOpenChange={setIsOpen}>
         <DialogContent className="sm:max-w-xl w-[95vw] max-h-[90vh] overflow-y-auto">
-          <form onSubmit={(e) => void handleSubmit(e)}>
-            <DialogHeader className="mb-4">
-              <DialogTitle>Add job to {column.name}</DialogTitle>
-            </DialogHeader>
+          <DialogHeader className="mb-2">
+            <DialogTitle>Add job to {column.name}</DialogTitle>
+          </DialogHeader>
 
-            {error && (
-              <div className="p-2 mb-4 text-xs bg-destructive/10 text-destructive rounded border border-destructive/20">
-                {error}
-              </div>
-            )}
-
-            <div className="space-y-4">
-              <div className="grid grid-cols-1 md:grid-cols-2 justify-center items-start gap-4">
-                <div className="flex flex-col sm:flex-row gap-1 sm:gap-2 sm:items-center">
-                  <label htmlFor="company" className="w-24 shrink-0 text-sm">
-                    Company*
-                  </label>
-                  <input
-                    required
-                    value={jobForm.company}
-                    onChange={(e) =>
-                      setJobForm({ ...jobForm, company: e.target.value })
-                    }
-                    className="border rounded px-2 py-1 w-full text-sm"
-                    name="company"
-                    type="text"
-                    placeholder="Apple, Google, ..."
-                  />
-                </div>
-
-                <div className="flex flex-col sm:flex-row gap-1 sm:gap-2 sm:items-center">
-                  <label htmlFor="position" className="w-24 shrink-0 text-sm">
-                    Position*
-                  </label>
-                  <input
-                    required
-                    value={jobForm.position}
-                    onChange={(e) =>
-                      setJobForm({ ...jobForm, position: e.target.value })
-                    }
-                    name="position"
-                    type="text"
-                    className="border rounded px-2 py-1 w-full text-sm"
-                    placeholder="Software Engineer"
-                  />
-                </div>
-
-                <div className="flex flex-col sm:flex-row gap-1 sm:gap-2 sm:items-center">
-                  <label htmlFor="location" className="w-24 shrink-0 text-sm">
-                    Location
-                  </label>
-                  <input
-                    value={jobForm.location || ""}
-                    onChange={(e) =>
-                      setJobForm({ ...jobForm, location: e.target.value })
-                    }
-                    name="location"
-                    type="text"
-                    className="border rounded px-2 py-1 w-full text-sm"
-                    placeholder="Riyadh, Remote..."
-                  />
-                </div>
-
-                <div className="flex flex-col sm:flex-row gap-1 sm:gap-2 sm:items-center">
-                  <label htmlFor="status" className="w-24 shrink-0 text-sm">
-                    Status
-                  </label>
-                  <input
-                    value={jobForm.status}
-                    onChange={(e) =>
-                      setJobForm({ ...jobForm, status: e.target.value })
-                    }
-                    name="status"
-                    type="text"
-                    className="border rounded px-2 py-1 w-full text-sm"
-                    placeholder="applied"
-                  />
-                </div>
-
-                <div className="flex flex-col sm:flex-row gap-1 sm:gap-2 sm:items-center">
-                  <label htmlFor="salary" className="w-24 shrink-0 text-sm">
-                    Salary
-                  </label>
-                  <input
-                    value={jobForm.salary || ""}
-                    onChange={(e) =>
-                      setJobForm({ ...jobForm, salary: e.target.value })
-                    }
-                    type="text"
-                    name="salary"
-                    className="border rounded px-2 py-1 w-full text-sm"
-                    placeholder="10k - 15k"
-                  />
-                </div>
-              </div>
-
-              <div className="flex flex-col sm:flex-row gap-1 sm:gap-2 sm:items-start">
-                <label htmlFor="tags" className="w-24 shrink-0 sm:mt-1 text-sm">
-                  Tags
-                </label>
-                <div className="w-full">
-                  <input
-                    value={jobForm.tags || ""}
-                    onChange={(e) =>
-                      setJobForm({
-                        ...jobForm,
-                        tags: e.target.value,
-                      })
-                    }
-                    type="text"
-                    placeholder="React, Next.js, Frontend"
-                    name="tags"
-                    className="border rounded px-2 py-1 w-full text-sm"
-                  />
-                  <p className="text-xs text-muted-foreground mt-1">
-                    Separate tags with commas
-                  </p>
-                </div>
-              </div>
-
-              <div className="flex flex-col sm:flex-row gap-1 sm:gap-2 sm:items-center">
-                <label htmlFor="url" className="w-24 shrink-0 text-sm">
-                  Job URL
-                </label>
-                <input
-                  value={jobForm.jobUrl || ""}
-                  onChange={(e) =>
-                    setJobForm({ ...jobForm, jobUrl: e.target.value })
-                  }
-                  type="text"
-                  name="url"
-                  className="border rounded px-2 py-1 w-full text-sm"
-                  placeholder="https://..."
-                />
-              </div>
-
-              <div className="flex flex-col sm:flex-row gap-1 sm:gap-2 sm:items-start">
-                <label htmlFor="description" className="w-24 shrink-0 sm:mt-1 text-sm">
-                  Description
-                </label>
-                <textarea
-                  value={jobForm.description || ""}
-                  onChange={(e) =>
-                    setJobForm({ ...jobForm, description: e.target.value })
-                  }
-                  name="description"
-                  className="border rounded px-2 py-1 w-full text-sm"
-                  rows={3}
-                  placeholder="Job details, requirements, etc."
-                />
-              </div>
-
-              <div className="flex flex-col sm:flex-row gap-1 sm:gap-2 sm:items-start">
-                <label htmlFor="notes" className="w-24 shrink-0 sm:mt-1 text-sm">
-                  Notes
-                </label>
-                <textarea
-                  value={jobForm.notes || ""}
-                  onChange={(e) =>
-                    setJobForm({ ...jobForm, notes: e.target.value })
-                  }
-                  name="notes"
-                  className="border rounded px-2 py-1 w-full text-sm"
-                  rows={2}
-                  placeholder="Recruiter notes..."
-                />
-              </div>
-            </div>
-
-            <DialogFooter className="flex-col-reverse sm:flex-row sm:justify-end gap-2 mt-4">
-              <DialogClose asChild>
-                <Button variant="outline" type="button">
-                  Cancel
-                </Button>
-              </DialogClose>
-              <Button type="submit" disabled={isSubmitting}>
-                {isSubmitting ? "Adding..." : "Add Job"}
-              </Button>
-            </DialogFooter>
-          </form>
+          <JobForm
+            submitLabel="Add Job"
+            isSubmitting={isSubmitting}
+            error={error}
+            onCancel={() => setIsOpen(false)}
+            onSubmit={handleSubmit}
+          />
         </DialogContent>
       </Dialog>
 
@@ -455,16 +248,13 @@ const KanbanBoard = ({ boardDoc }: KanbanBoardProps) => {
     const targetId = event.over?.id as string;
 
     if (!activeJobId || !targetId) {
-      // Dropped outside any valid target -> cancel/revert to baseline (Fixes Bug 2.4)
       resetToBaseline();
       return;
     }
 
-    // Apply move and retrieve final target parameters
     const moveResult = moveJob(activeJobId, targetId);
 
     if (moveResult) {
-      // Await promise properly in queue (Fixes Bug 2.1)
       boardMutationQueue.enqueue(
         async () => {
           await moveJobToColumn({
@@ -478,7 +268,6 @@ const KanbanBoard = ({ boardDoc }: KanbanBoardProps) => {
     }
   }
 
-  // Escape mid-drag or drag interrupted -> revert cleanly (Fixes Bug 2.3)
   function handleDragCancel() {
     setActiveId(null);
     resetToBaseline();
@@ -525,7 +314,6 @@ const KanbanBoard = ({ boardDoc }: KanbanBoardProps) => {
           );
         })}
 
-        {/* Presentational DragOverlay with NO useSortable hooks (Fixes Bug 5.4) */}
         <DragOverlay>
           {activeJob ? <JobApplicationCard job={activeJob} isOverlay /> : null}
         </DragOverlay>
