@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import type {
   JobApplication as Job,
   Column,
@@ -9,8 +9,10 @@ import { useSortable } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
 import {
   deleteJobApplication,
-  updateJobApplication,
+  moveJobToColumn,
+  updateJobFields,
 } from "@/actions/jobApplication";
+import boardMutationQueue from "@/lib/mutationQueue";
 import {
   Card,
   CardAction,
@@ -32,6 +34,7 @@ import {
   LocateFixed,
   SquarePen,
   Trash,
+  GripVertical,
 } from "lucide-react";
 import { Button } from "./button";
 import {
@@ -47,7 +50,8 @@ interface JobApplicationProps {
   job: Job;
   columns: Column[];
 }
-interface jobFormInterface {
+
+interface JobFormInterface {
   company: string;
   position: string;
   location?: string;
@@ -60,12 +64,9 @@ interface jobFormInterface {
 }
 
 const JobApplication = ({ job, columns }: JobApplicationProps) => {
-  // States
-
-  // card info expanded
   const [isExpanded, setIsExpanded] = useState<boolean>(false);
 
-  // Dnd Kit
+  // DnD Kit Sortable
   const {
     attributes,
     listeners,
@@ -80,15 +81,17 @@ const JobApplication = ({ job, columns }: JobApplicationProps) => {
       job,
     },
   });
+
   const style = {
     transform: CSS.Transform.toString(transform),
     transition,
-    opacity: isDragging ? 0.5 : 1,
+    opacity: isDragging ? 0.4 : 1,
   };
 
-  //   Edit Job State
+  // Edit Job State & sync with props (Fixes Bug 5.5)
   const [isOpen, setIsOpen] = useState(false);
-  const [jobForm, setJobForm] = useState<jobFormInterface>({
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [jobForm, setJobForm] = useState<JobFormInterface>({
     company: job.company,
     position: job.position,
     location: job.location,
@@ -99,59 +102,80 @@ const JobApplication = ({ job, columns }: JobApplicationProps) => {
     tags: job.tags?.join(", "),
     description: job.description,
   });
-  async function handleDelete(jobId: string) {
-    console.log(jobId);
+
+  useEffect(() => {
+    setJobForm({
+      company: job.company,
+      position: job.position,
+      location: job.location,
+      status: job.status,
+      notes: job.notes,
+      salary: job.salary,
+      jobUrl: job.jobUrl,
+      tags: job.tags?.join(", "),
+      description: job.description,
+    });
+  }, [job]);
+
+  function handleDelete(jobId: string) {
+    boardMutationQueue.enqueue(
+      async () => {
+        await deleteJobApplication(jobId);
+      },
+      { key: String(jobId) },
+    );
+  }
+
+  async function handleEditing(e: React.FormEvent, jobId: string) {
+    e.preventDefault();
+    setIsSubmitting(true);
     try {
-      const res = await deleteJobApplication(jobId);
-    } catch (error) {
-      console.log(error);
+      const sanitizedJobForm = {
+        ...jobForm,
+        tags: jobForm.tags
+          ?.split(",")
+          .map((tag) => tag.trim())
+          .filter((tag) => tag.length > 0),
+      };
+
+      const res = await updateJobFields({ jobId, ...sanitizedJobForm });
+      if (res.success) {
+        setIsOpen(false);
+      }
+    } finally {
+      setIsSubmitting(false);
     }
   }
-  async function handleEditing(
-    e: React.FormEvent,
-    jobId: string,
-    newColumnId: string,
-  ) {
-    e.preventDefault();
-    const sanitizedJobForm = {
-      ...jobForm,
-      tags: jobForm.tags
-        ?.split(",")
-        .map((tag) => tag.trim())
-        .filter((tag) => tag.length > 0),
-    };
-    const updates = { ...sanitizedJobForm, jobId, columnId: newColumnId };
-    const res = await updateJobApplication(updates);
-    if (res.success) setIsOpen(false);
-  }
-  async function handleMoveToNewColumn(
+
+  function handleMoveToNewColumn(
     e: React.MouseEvent,
     jobId: string,
     newColumnId: string,
   ) {
     e.preventDefault();
-    const updates = { jobId, columnId: newColumnId };
-    console.log(updates);
-    await updateJobApplication(updates);
-    return;
+    boardMutationQueue.enqueue(
+      async () => {
+        await moveJobToColumn({ jobId, targetColumnId: newColumnId });
+      },
+      { key: String(jobId) },
+    );
   }
 
   return (
     <>
-      {/* Pop Up Editing */}
+      {/* Pop Up Editing Dialog */}
       <Dialog open={isOpen} onOpenChange={setIsOpen}>
         <DialogContent className="sm:max-w-xl w-[95vw] max-h-[90vh] overflow-y-auto">
-          <form onSubmit={(e) => handleEditing(e, job._id, job.columnId)}>
+          <form onSubmit={(e) => void handleEditing(e, job._id)}>
             <DialogHeader>
-              <DialogTitle>Job Details</DialogTitle>
+              <DialogTitle>Edit Job Details</DialogTitle>
             </DialogHeader>
-            {/* Form Start */}
+
             <div className="mt-4">
-              {/* Main Form */}
               <div className="grid grid-cols-1 md:grid-cols-2 justify-center items-start gap-4">
                 {/* Company */}
                 <div className="flex flex-col sm:flex-row gap-1 sm:gap-2 sm:items-center">
-                  <label htmlFor="company" className="w-24 shrink-0">
+                  <label htmlFor="company" className="w-24 shrink-0 text-sm">
                     Company*
                   </label>
                   <input
@@ -160,15 +184,16 @@ const JobApplication = ({ job, columns }: JobApplicationProps) => {
                     onChange={(e) =>
                       setJobForm({ ...jobForm, company: e.target.value })
                     }
-                    className="border-2 px-2 py-1 w-full"
+                    className="border rounded px-2 py-1 w-full text-sm"
                     name="company"
                     type="text"
-                    placeholder="Apple, facebook, ..."
+                    placeholder="Apple, Google, ..."
                   />
                 </div>
+
                 {/* Position */}
                 <div className="flex flex-col sm:flex-row gap-1 sm:gap-2 sm:items-center">
-                  <label htmlFor="position" className="w-24 shrink-0">
+                  <label htmlFor="position" className="w-24 shrink-0 text-sm">
                     Position*
                   </label>
                   <input
@@ -179,29 +204,31 @@ const JobApplication = ({ job, columns }: JobApplicationProps) => {
                     }
                     name="position"
                     type="text"
-                    className="border-2 px-2 py-1 w-full"
+                    className="border rounded px-2 py-1 w-full text-sm"
                     placeholder="Software Engineer"
                   />
                 </div>
+
                 {/* Location */}
                 <div className="flex flex-col sm:flex-row gap-1 sm:gap-2 sm:items-center">
-                  <label htmlFor="location" className="w-24 shrink-0">
+                  <label htmlFor="location" className="w-24 shrink-0 text-sm">
                     Location
                   </label>
                   <input
-                    value={jobForm.location}
+                    value={jobForm.location || ""}
                     onChange={(e) =>
                       setJobForm({ ...jobForm, location: e.target.value })
                     }
                     name="location"
                     type="text"
-                    className="border-2 px-2 py-1 w-full"
-                    placeholder="Riyadh, KSA"
+                    className="border rounded px-2 py-1 w-full text-sm"
+                    placeholder="Riyadh, Remote, ..."
                   />
                 </div>
+
                 {/* Status */}
                 <div className="flex flex-col sm:flex-row gap-1 sm:gap-2 sm:items-center">
-                  <label htmlFor="status" className="w-24 shrink-0">
+                  <label htmlFor="status" className="w-24 shrink-0 text-sm">
                     Status
                   </label>
                   <input
@@ -211,35 +238,37 @@ const JobApplication = ({ job, columns }: JobApplicationProps) => {
                     }
                     name="status"
                     type="text"
-                    className="border-2 px-2 py-1 w-full"
+                    className="border rounded px-2 py-1 w-full text-sm"
                     placeholder="applied"
                   />
                 </div>
+
                 {/* Salary */}
                 <div className="flex flex-col sm:flex-row gap-1 sm:gap-2 sm:items-center">
-                  <label htmlFor="salary" className="w-24 shrink-0">
+                  <label htmlFor="salary" className="w-24 shrink-0 text-sm">
                     Salary
                   </label>
                   <input
-                    value={jobForm.salary}
+                    value={jobForm.salary || ""}
                     onChange={(e) =>
                       setJobForm({ ...jobForm, salary: e.target.value })
                     }
                     type="text"
                     name="salary"
-                    className="border-2 px-2 py-1 w-full"
-                    placeholder="10k"
+                    className="border rounded px-2 py-1 w-full text-sm"
+                    placeholder="10k - 15k"
                   />
                 </div>
               </div>
+
               {/* Tags Section */}
               <div className="flex flex-col sm:flex-row gap-1 sm:gap-2 sm:items-start my-4">
-                <label htmlFor="tags" className="w-24 shrink-0 sm:mt-1">
+                <label htmlFor="tags" className="w-24 shrink-0 sm:mt-1 text-sm">
                   Tags
                 </label>
                 <div className="w-full">
                   <input
-                    value={jobForm.tags}
+                    value={jobForm.tags || ""}
                     onChange={(e) =>
                       setJobForm({
                         ...jobForm,
@@ -247,110 +276,143 @@ const JobApplication = ({ job, columns }: JobApplicationProps) => {
                       })
                     }
                     type="text"
-                    placeholder="React, Next JS, FrontEnd"
+                    placeholder="React, Next.js, Frontend"
                     name="tags"
-                    className="border-2 px-2 py-1 w-full"
+                    className="border rounded px-2 py-1 w-full text-sm"
                   />
-                  <p className="text-xs text-gray-400 font-light mt-1">
-                    Make sure to seperate each tag with a comma
+                  <p className="text-xs text-muted-foreground mt-1">
+                    Separate tags with commas
                   </p>
                 </div>
               </div>
+
+              {/* URL */}
+              <div className="flex flex-col sm:flex-row gap-1 sm:gap-2 sm:items-center my-4">
+                <label htmlFor="url" className="w-24 shrink-0 text-sm">
+                  Job URL
+                </label>
+                <input
+                  value={jobForm.jobUrl || ""}
+                  onChange={(e) =>
+                    setJobForm({ ...jobForm, jobUrl: e.target.value })
+                  }
+                  type="text"
+                  name="url"
+                  className="border rounded px-2 py-1 w-full text-sm"
+                  placeholder="https://..."
+                />
+              </div>
+
               {/* Description */}
-              <div className="my-4 flex flex-col gap-1">
-                <label htmlFor="description">Description</label>
+              <div className="flex flex-col sm:flex-row gap-1 sm:gap-2 sm:items-start my-4">
+                <label htmlFor="description" className="w-24 shrink-0 sm:mt-1 text-sm">
+                  Description
+                </label>
                 <textarea
-                  value={jobForm.description}
+                  value={jobForm.description || ""}
                   onChange={(e) =>
                     setJobForm({ ...jobForm, description: e.target.value })
                   }
                   name="description"
-                  placeholder="Job Description..."
-                  className="border-2 px-2 py-1 w-full"
-                  rows={4}
+                  className="border rounded px-2 py-1 w-full text-sm"
+                  rows={3}
+                  placeholder="Job details, requirements, etc."
                 />
               </div>
+
               {/* Notes */}
-              <div className="flex flex-col gap-1">
-                <label htmlFor="notes">Notes</label>
+              <div className="flex flex-col sm:flex-row gap-1 sm:gap-2 sm:items-start my-4">
+                <label htmlFor="notes" className="w-24 shrink-0 sm:mt-1 text-sm">
+                  Notes
+                </label>
                 <textarea
-                  value={jobForm.notes}
+                  value={jobForm.notes || ""}
                   onChange={(e) =>
                     setJobForm({ ...jobForm, notes: e.target.value })
                   }
                   name="notes"
-                  placeholder="Write your notes..."
-                  className="border-2 px-2 py-1 w-full"
-                  rows={3}
+                  className="border rounded px-2 py-1 w-full text-sm"
+                  rows={2}
+                  placeholder="Recruiter contact, interview prep..."
                 />
               </div>
             </div>
-            {/* Footer */}
-            <DialogFooter className="mt-6">
-              <div className="flex justify-end gap-2 w-full">
-                <DialogClose asChild>
-                  <Button type="button" variant="outline">
-                    Cancel
-                  </Button>
-                </DialogClose>
-                <Button type="submit">Edit</Button>
-              </div>
+
+            <DialogFooter className="flex-col-reverse sm:flex-row sm:justify-end gap-2 mt-4">
+              <DialogClose asChild>
+                <Button variant="outline" type="button">
+                  Cancel
+                </Button>
+              </DialogClose>
+              <Button type="submit" disabled={isSubmitting}>
+                {isSubmitting ? "Saving..." : "Save Changes"}
+              </Button>
             </DialogFooter>
           </form>
         </DialogContent>
       </Dialog>
 
-      {/* #################################################################################### */}
-      {/* #################################################################################### */}
-      {/* Job */}
-      <div ref={setNodeRef} style={style} {...attributes} {...listeners}>
+      {/* Main Sortable Card Container */}
+      <div ref={setNodeRef} style={style}>
         <Card
-          key={job._id}
-          className="py-2 pb-4 px-8 gap-2"
+          className="py-2 pb-4 px-4 gap-2 border shadow-sm hover:shadow-md transition-shadow cursor-pointer"
           onClick={() => setIsExpanded(!isExpanded)}
         >
           <CardHeader className="p-0">
-            <div className="text-md w-full flex justify-between">
-              <CardTitle>
-                <h2
-                  className=" text-primary font-semibold"
+            <div className="text-md w-full flex items-center justify-between gap-2">
+              <div className="flex items-center gap-2">
+                {/* Dedicated Drag Handle with GripVertical (Fixes Addendum #2) */}
+                <button
+                  type="button"
+                  aria-label="Drag job card"
+                  className="cursor-grab active:cursor-grabbing text-muted-foreground hover:text-foreground touch-none p-1 rounded hover:bg-muted"
+                  {...attributes}
+                  {...listeners}
                   onClick={(e) => e.stopPropagation()}
                 >
-                  {job.position}
-                </h2>
-                <h3
-                  className="font-semibold"
-                  onClick={(e) => e.stopPropagation()}
-                >
-                  {job.company}
-                </h3>
-              </CardTitle>
+                  <GripVertical size={16} />
+                </button>
+
+                <CardTitle>
+                  <h2 className="text-primary font-semibold text-sm">
+                    {job.position}
+                  </h2>
+                  <h3 className="font-semibold text-xs text-muted-foreground">
+                    {job.company}
+                  </h3>
+                </CardTitle>
+              </div>
+
               <CardAction>
                 <DropdownMenu>
                   <DropdownMenuTrigger asChild>
                     <Button
-                      variant="outline"
+                      variant="ghost"
+                      size="sm"
+                      className="h-8 w-8 p-0"
                       onClick={(e) => e.stopPropagation()}
                     >
-                      <EllipsisVertical />
+                      <EllipsisVertical size={16} />
                     </Button>
                   </DropdownMenuTrigger>
-                  <DropdownMenuContent onClick={(e) => e.stopPropagation()}>
+                  <DropdownMenuContent
+                    align="end"
+                    onClick={(e) => e.stopPropagation()}
+                  >
                     <DropdownMenuItem
-                      className=""
                       onSelect={(e) => {
                         e.preventDefault();
                         setIsOpen(true);
                       }}
                     >
-                      <div className="flex gap-4 items-center">
-                        <span>
-                          <SquarePen size={28} />
-                        </span>
-                        <p className="">Edit</p>
+                      <div className="flex gap-2 items-center">
+                        <SquarePen size={16} />
+                        <span>Edit</span>
                       </div>
                     </DropdownMenuItem>
+
                     {columns.map((col) => {
+                      if (col._id === job.columnId) return null;
                       return (
                         <DropdownMenuItem
                           key={col._id}
@@ -358,18 +420,18 @@ const JobApplication = ({ job, columns }: JobApplicationProps) => {
                             handleMoveToNewColumn(e, job._id, col._id);
                           }}
                         >
-                          <div>
-                            <span>Move to {col.name}</span>
-                          </div>
+                          <span>Move to {col.name}</span>
                         </DropdownMenuItem>
                       );
                     })}
-                    <DropdownMenuItem onClick={() => handleDelete(job._id)}>
-                      <div className="flex gap-4 items-center">
-                        <span>
-                          <Trash className="text-destructive" />
-                        </span>
-                        <p className="text-destructive">Delete</p>
+
+                    <DropdownMenuItem
+                      onClick={() => handleDelete(job._id)}
+                      className="text-destructive focus:text-destructive"
+                    >
+                      <div className="flex gap-2 items-center">
+                        <Trash size={16} />
+                        <span>Delete</span>
                       </div>
                     </DropdownMenuItem>
                   </DropdownMenuContent>
@@ -377,56 +439,69 @@ const JobApplication = ({ job, columns }: JobApplicationProps) => {
               </CardAction>
             </div>
           </CardHeader>
+
           <CardDescription>
-            <div className="flex gap-3 text-xs text-gray-500">
-              <div
-                className="flex justify-center items-center gap-1 "
-                onClick={(e) => e.stopPropagation()}
-              >
-                {job.salary && (
-                  <>
-                    <CircleDollarSign size={16} />
-                    <span>{job.salary}</span>
-                  </>
-                )}
-              </div>
-              <div
-                className="flex justify-center items-center gap-1"
-                onClick={(e) => e.stopPropagation()}
-              >
-                {job.location && (
-                  <>
-                    <LocateFixed size={16} />
-                    <span>{job.location}</span>
-                  </>
-                )}
-              </div>
-              <div className="flex gap-1"></div>
+            <div className="flex gap-3 text-xs text-muted-foreground mt-1">
+              {job.salary && (
+                <div className="flex items-center gap-1">
+                  <CircleDollarSign size={14} />
+                  <span>{job.salary}</span>
+                </div>
+              )}
+              {job.location && (
+                <div className="flex items-center gap-1">
+                  <LocateFixed size={14} />
+                  <span>{job.location}</span>
+                </div>
+              )}
             </div>
           </CardDescription>
-          <CardContent className="px-0">
+
+          <CardContent className="px-0 pb-0">
             <div
-              className={`grid transition-all duration-300 ${isExpanded ? "grid-rows-[1fr]" : "grid-rows-[0fr]"} my-4`}
+              className={`grid transition-all duration-300 ${
+                isExpanded ? "grid-rows-[1fr] my-3" : "grid-rows-[0fr]"
+              }`}
             >
-              <div className="overflow-hidden text-xs">
-                <p className="border-l-2 border-sky-200 pl-4 italic mb-8">
-                  {job.description}
-                </p>
-                {job.notes && <p className="">{job.notes}</p>}
+              <div className="overflow-hidden text-xs space-y-2">
+                {job.description && (
+                  <p className="border-l-2 border-primary/40 pl-3 italic text-muted-foreground">
+                    {job.description}
+                  </p>
+                )}
+                {job.notes && (
+                  <p className="text-muted-foreground">
+                    <span className="font-semibold text-foreground">Notes: </span>
+                    {job.notes}
+                  </p>
+                )}
+                {job.jobUrl && (
+                  <a
+                    href={job.jobUrl}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="text-primary underline block"
+                    onClick={(e) => e.stopPropagation()}
+                  >
+                    View Job Posting
+                  </a>
+                )}
               </div>
             </div>
-            <div className="flex gap-2 p-0 flex-wrap">
-              {job.tags?.map((tag) => (
-                <Badge
-                  key={tag}
-                  variant="outline"
-                  className="hover:bg-accent"
-                  onClick={(e) => e.stopPropagation()}
-                >
-                  {tag}
-                </Badge>
-              ))}
-            </div>
+
+            {job.tags && job.tags.length > 0 && (
+              <div className="flex gap-1.5 p-0 flex-wrap mt-2">
+                {job.tags.map((tag) => (
+                  <Badge
+                    key={tag}
+                    variant="outline"
+                    className="text-[10px] px-1.5 py-0.5"
+                  >
+                    {tag}
+                  </Badge>
+                ))}
+              </div>
+            )}
           </CardContent>
         </Card>
       </div>
