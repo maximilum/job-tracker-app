@@ -1,24 +1,10 @@
 // For adding custom fonts with other frameworks, see:
 // https://tailwindcss.com/docs/font-family
 import type { Metadata } from "next";
-<<<<<<< HEAD
 import { Alexandria, JetBrains_Mono } from "next/font/google";
 import "./globals.css";
 import Navbar from "@/components/Navbar";
 import { LanguageProvider } from "@/lib/i18n/LanguageContext";
-=======
-import { IBM_Plex_Sans_Arabic, Tomorrow, BioRhyme, JetBrains_Mono } from "next/font/google";
-import "./globals.css";
-import Navbar from "@/components/Navbar";
-import { LanguageProvider } from "@/lib/i18n/LanguageContext";
-
-const fontArabic = IBM_Plex_Sans_Arabic({
-  subsets: ["arabic", "latin"],
-  weight: ["300", "400", "500", "600", "700"],
-  variable: "--font-arabic",
-  display: "swap",
-});
->>>>>>> ccb1c11ea94338212a2e026e84cdf9c48228e0cf
 
 const fontSans = Alexandria({
   subsets: ["arabic", "latin"],
@@ -64,11 +50,7 @@ export default function RootLayout({
         />
       </head>
       <body
-<<<<<<< HEAD
         className={`${fontSans.className} ${fontSans.variable} ${fontMono.variable} font-sans antialiased overflow-x-hidden`}
-=======
-        className={`${fontArabic.variable} ${fontSans.variable} ${fontSerif.variable} ${fontMono.variable} antialiased overflow-x-hidden`}
->>>>>>> ccb1c11ea94338212a2e026e84cdf9c48228e0cf
       >
         <LanguageProvider>
           <Navbar />
