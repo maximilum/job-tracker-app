@@ -1,20 +1,16 @@
 // For adding custom fonts with other frameworks, see:
 // https://tailwindcss.com/docs/font-family
 import type { Metadata } from "next";
-import { Tomorrow, BioRhyme, JetBrains_Mono } from "next/font/google";
+import { Alexandria, JetBrains_Mono } from "next/font/google";
 import "./globals.css";
 import Navbar from "@/components/Navbar";
+import { LanguageProvider } from "@/lib/i18n/LanguageContext";
 
-const fontSans = Tomorrow({
-  subsets: ["latin"],
-  weight: ["400"],
+const fontSans = Alexandria({
+  subsets: ["arabic", "latin"],
+  weight: ["300", "400", "500", "600", "700"],
   variable: "--font-sans",
-});
-
-const fontSerif = BioRhyme({
-  subsets: ["latin"],
-  weight: ["400"],
-  variable: "--font-serif",
+  display: "swap",
 });
 
 const fontMono = JetBrains_Mono({
@@ -24,8 +20,8 @@ const fontMono = JetBrains_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "Job Tracker",
-  description: "Track Your Job Applications",
+  title: "متتبع الوظائف | Job Tracker",
+  description: "تتبع طلبات التوظيف الخاصة بك - Track Your Job Applications",
 };
 
 export default function RootLayout({
@@ -34,12 +30,32 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en" className="overflow-x-hidden">
+    <html lang="ar" dir="rtl" className="overflow-x-hidden" suppressHydrationWarning>
+      <head>
+        <script
+          dangerouslySetInnerHTML={{
+            __html: `
+              try {
+                var saved = localStorage.getItem('app_lang');
+                if (saved === 'en') {
+                  document.documentElement.lang = 'en';
+                  document.documentElement.dir = 'ltr';
+                } else {
+                  document.documentElement.lang = 'ar';
+                  document.documentElement.dir = 'rtl';
+                }
+              } catch (e) {}
+            `,
+          }}
+        />
+      </head>
       <body
-        className={`${fontSans.variable} ${fontSerif.variable} ${fontMono.variable} antialiased overflow-x-hidden`}
+        className={`${fontSans.className} ${fontSans.variable} ${fontMono.variable} font-sans antialiased overflow-x-hidden`}
       >
-        <Navbar></Navbar>
-        {children}
+        <LanguageProvider>
+          <Navbar />
+          {children}
+        </LanguageProvider>
       </body>
     </html>
   );

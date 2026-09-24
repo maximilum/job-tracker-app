@@ -4,6 +4,7 @@ import { redirect } from "next/navigation";
 import { Board, Column, JobApplication } from "@/lib/models";
 import connectDB from "@/lib/db";
 import KanbanBoard from "@/components/KanbanBoard";
+import DashboardHeader from "@/components/DashboardHeader";
 import initUserBoard from "@/lib/init_user_board";
 import { Board as BoardI, Column as ColumnI, JobApplication as JobI } from "@/lib/models/models.types";
 
@@ -66,12 +67,7 @@ const DashboardComponent = async () => {
     <div>
       <div className="w-full h-[calc(100vh-52px)] py-4 px-4 lg:py-12 lg:px-36">
         <div className="w-full h-full">
-          <h1 className="text-2xl mb-8">
-            {board.name}
-            <p className="text-sm text-accent-foreground">
-              Track Your Applications
-            </p>
-          </h1>
+          <DashboardHeader rawBoardName={board.name} />
 
           <KanbanBoard boardDoc={board} />
         </div>

@@ -21,11 +21,14 @@ import {
   AvatarFallback,
   AvatarImage,
 } from "@/components/ui/avatar";
+import { useLanguage } from "@/lib/i18n/LanguageContext";
+import LanguageToggle from "./LanguageToggle";
 
 const Navbar = () => {
   const router = useRouter();
   const session = useSession();
   const user = session.data?.user;
+  const { t } = useLanguage();
 
   const handleSignOut = async () => {
     const result = await signOut();
@@ -38,19 +41,20 @@ const Navbar = () => {
     <nav className="border-b border-border bg-background text-foreground">
       <div className="container flex mx-auto px-4 h-16 items-center justify-between">
         <Link href="/">
-          <div className="flex items-center gap-4 text-primary text-2xl font-semibold">
+          <div className="flex items-center gap-3 text-primary text-2xl font-semibold">
             <IdCardLanyard size={30} />
-            <p>Job Tracker</p>
+            <p>{t.nav.appName}</p>
           </div>
         </Link>
-        <div className="flex items-center gap-4">
+        <div className="flex items-center gap-3">
+          <LanguageToggle />
           {!user ? (
-            <div className="flex gap-2">
+            <div className="flex items-center gap-2">
               <Link href={"/sign-in"}>
-                <Button variant={"ghost"}>Sign In</Button>
+                <Button variant={"ghost"}>{t.nav.signIn}</Button>
               </Link>
               <Link href={"/sign-up"}>
-                <Button>Sign Up</Button>
+                <Button>{t.nav.signUp}</Button>
               </Link>
             </div>
           ) : (
@@ -59,7 +63,7 @@ const Navbar = () => {
                 <DropdownMenuTrigger asChild>
                   <Button
                     variant="ghost"
-                    className="relative h-8 w-8 mr-4 rounded-full"
+                    className="relative h-8 w-8 me-2 rounded-full"
                   >
                     <Avatar>
                       <AvatarImage src="" alt="@shadcn" className="grayscale" />
@@ -80,12 +84,11 @@ const Navbar = () => {
                     </DropdownMenuLabel>
                   </DropdownMenuGroup>
                   <DropdownMenuSeparator />
-                  {/* Clean DropdownMenuItem without wrapping <button> (Fixes Addendum #3) */}
                   <DropdownMenuItem
                     onClick={() => void handleSignOut()}
                     className="cursor-pointer"
                   >
-                    Log out
+                    {t.nav.logout}
                     <DropdownMenuShortcut>
                       <LogOut size={16} />
                     </DropdownMenuShortcut>
@@ -93,7 +96,7 @@ const Navbar = () => {
                 </DropdownMenuContent>
               </DropdownMenu>
               <Link href={"/dashboard"}>
-                <Button variant={"ghost"}>Dashboard</Button>
+                <Button variant={"ghost"}>{t.nav.dashboard}</Button>
               </Link>
             </>
           )}

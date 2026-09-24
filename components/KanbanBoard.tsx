@@ -52,6 +52,7 @@ import {
 } from "@dnd-kit/sortable";
 import { useBoard } from "@/hooks/useBoard";
 import boardMutationQueue from "@/lib/mutationQueue";
+import { useLanguage } from "@/lib/i18n/LanguageContext";
 
 interface ColConfig {
   color: string;
@@ -98,6 +99,9 @@ const DroppableColumn = ({
   columns,
   boardId,
 }: DroppableColumnProps) => {
+  const { t, getLocalizedColumnName } = useLanguage();
+  const localizedName = getLocalizedColumnName(column.name);
+
   // Avoid reassigning prop parameter (Fixes Bug 5.6)
   const otherColumns = columns.filter((col) => col._id !== column._id);
 
@@ -146,11 +150,13 @@ const DroppableColumn = ({
       <Dialog open={isOpen} onOpenChange={setIsOpen}>
         <DialogContent className="sm:max-w-xl w-[95vw] max-h-[90vh] overflow-y-auto">
           <DialogHeader className="mb-2">
-            <DialogTitle>Add job to {column.name}</DialogTitle>
+            <DialogTitle>
+              {t.dashboard.addJobTo} {localizedName}
+            </DialogTitle>
           </DialogHeader>
 
           <JobForm
-            submitLabel="Add Job"
+            submitLabel={t.dashboard.addJob}
             isSubmitting={isSubmitting}
             error={error}
             onCancel={() => setIsOpen(false)}
@@ -167,7 +173,7 @@ const DroppableColumn = ({
               {config.icon}
             </span>
             <CardTitle className="text-base font-semibold">
-              {column.name}
+              {localizedName}
             </CardTitle>
             <span className="text-xs bg-muted text-muted-foreground font-semibold px-2 py-0.5 rounded-full">
               {column.jobApplications.length}
@@ -182,7 +188,7 @@ const DroppableColumn = ({
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end">
               <DropdownMenuItem onClick={() => setIsOpen(true)}>
-                Add Job
+                {t.dashboard.addJob}
               </DropdownMenuItem>
             </DropdownMenuContent>
           </DropdownMenu>
@@ -206,11 +212,11 @@ const DroppableColumn = ({
 
         <button
           type="button"
-          className="w-full flex justify-center items-center gap-2 border-dashed border-2 py-2.5 rounded-md hover:bg-muted text-sm text-muted-foreground transition-colors"
+          className="w-full flex justify-center items-center gap-2 border-dashed border-2 py-2.5 rounded-md hover:bg-muted text-sm text-muted-foreground transition-colors cursor-pointer"
           onClick={() => setIsOpen(true)}
         >
           <CirclePlus size={18} />
-          <span>Add Job</span>
+          <span>{t.dashboard.addJob}</span>
         </button>
       </CardContent>
     </Card>

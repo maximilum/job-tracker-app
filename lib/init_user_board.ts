@@ -9,9 +9,9 @@ export default async function initUserBoard(userId: string) {
   const existingBoard = await Board.findOne({ userId });
   if (existingBoard) return existingBoard;
 
-  // Create a board for the user
+  // Create a board for the user (Arabic-first default)
   const newBoard = new Board({
-    name: "New Board",
+    name: "لوحة الوظائف",
     userId,
     columns: [],
   });
@@ -19,11 +19,11 @@ export default async function initUserBoard(userId: string) {
 
   // Default columns for a new board
   const DEFAULT_COLUMNS = [
-    { name: "Wish List", order: 0 },
-    { name: "Applied", order: 1 },
-    { name: "Interviewing", order: 2 },
-    { name: "Offer", order: 3 },
-    { name: "Rejected", order: 4 },
+    { name: "قائمة الرغبات", order: 0 },
+    { name: "تم التقديم", order: 1 },
+    { name: "المقابلات", order: 2 },
+    { name: "عرض وظيفي", order: 3 },
+    { name: "مرفوض", order: 4 },
   ];
 
   // Map default columns to column documents

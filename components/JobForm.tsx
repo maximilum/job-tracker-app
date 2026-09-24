@@ -2,6 +2,7 @@
 
 import React, { useState } from "react";
 import { Button } from "./ui/button";
+import { useLanguage } from "@/lib/i18n/LanguageContext";
 
 export interface JobFormData {
   company: string;
@@ -17,7 +18,7 @@ export interface JobFormData {
 
 interface JobFormProps {
   initialData?: Partial<JobFormData>;
-  submitLabel: string;
+  submitLabel?: string;
   isSubmitting?: boolean;
   error?: string;
   onSubmit: (data: JobFormData) => Promise<void> | void;
@@ -32,6 +33,9 @@ export const JobForm: React.FC<JobFormProps> = ({
   onSubmit,
   onCancel,
 }) => {
+  const { t } = useLanguage();
+  const resolvedSubmitLabel = submitLabel || t.jobForm.saveChanges;
+
   const [formData, setFormData] = useState<JobFormData>(() => ({
     company: initialData?.company || "",
     position: initialData?.position || "",
@@ -61,7 +65,7 @@ export const JobForm: React.FC<JobFormProps> = ({
         {/* Company */}
         <div className="flex flex-col sm:flex-row gap-1 sm:gap-2 sm:items-center">
           <label htmlFor="company" className="w-24 shrink-0 text-sm font-medium">
-            Company*
+            {t.jobForm.company}*
           </label>
           <input
             id="company"
@@ -73,14 +77,14 @@ export const JobForm: React.FC<JobFormProps> = ({
             className="border rounded px-2.5 py-1.5 w-full text-sm focus:ring-1 focus:ring-primary outline-none"
             name="company"
             type="text"
-            placeholder="Apple, Google, ..."
+            placeholder={t.jobForm.companyPlaceholder}
           />
         </div>
 
         {/* Position */}
         <div className="flex flex-col sm:flex-row gap-1 sm:gap-2 sm:items-center">
           <label htmlFor="position" className="w-24 shrink-0 text-sm font-medium">
-            Position*
+            {t.jobForm.position}*
           </label>
           <input
             id="position"
@@ -92,14 +96,14 @@ export const JobForm: React.FC<JobFormProps> = ({
             name="position"
             type="text"
             className="border rounded px-2.5 py-1.5 w-full text-sm focus:ring-1 focus:ring-primary outline-none"
-            placeholder="Software Engineer"
+            placeholder={t.jobForm.positionPlaceholder}
           />
         </div>
 
         {/* Location */}
         <div className="flex flex-col sm:flex-row gap-1 sm:gap-2 sm:items-center">
           <label htmlFor="location" className="w-24 shrink-0 text-sm font-medium">
-            Location
+            {t.jobForm.location}
           </label>
           <input
             id="location"
@@ -110,14 +114,14 @@ export const JobForm: React.FC<JobFormProps> = ({
             name="location"
             type="text"
             className="border rounded px-2.5 py-1.5 w-full text-sm focus:ring-1 focus:ring-primary outline-none"
-            placeholder="Remote, Riyadh, SF..."
+            placeholder={t.jobForm.locationPlaceholder}
           />
         </div>
 
         {/* Status */}
         <div className="flex flex-col sm:flex-row gap-1 sm:gap-2 sm:items-center">
           <label htmlFor="status" className="w-24 shrink-0 text-sm font-medium">
-            Status
+            {t.jobForm.status}
           </label>
           <input
             id="status"
@@ -128,14 +132,14 @@ export const JobForm: React.FC<JobFormProps> = ({
             name="status"
             type="text"
             className="border rounded px-2.5 py-1.5 w-full text-sm focus:ring-1 focus:ring-primary outline-none"
-            placeholder="applied, interviewing..."
+            placeholder={t.jobForm.statusPlaceholder}
           />
         </div>
 
         {/* Salary */}
         <div className="flex flex-col sm:flex-row gap-1 sm:gap-2 sm:items-center">
           <label htmlFor="salary" className="w-24 shrink-0 text-sm font-medium">
-            Salary
+            {t.jobForm.salary}
           </label>
           <input
             id="salary"
@@ -146,7 +150,7 @@ export const JobForm: React.FC<JobFormProps> = ({
             type="text"
             name="salary"
             className="border rounded px-2.5 py-1.5 w-full text-sm focus:ring-1 focus:ring-primary outline-none"
-            placeholder="$120k - $140k"
+            placeholder={t.jobForm.salaryPlaceholder}
           />
         </div>
       </div>
@@ -154,7 +158,7 @@ export const JobForm: React.FC<JobFormProps> = ({
       {/* Tags Section */}
       <div className="flex flex-col sm:flex-row gap-1 sm:gap-2 sm:items-start">
         <label htmlFor="tags" className="w-24 shrink-0 sm:mt-1 text-sm font-medium">
-          Tags
+          {t.jobForm.tags}
         </label>
         <div className="w-full">
           <input
@@ -167,12 +171,12 @@ export const JobForm: React.FC<JobFormProps> = ({
               })
             }
             type="text"
-            placeholder="React, Next.js, Frontend"
+            placeholder={t.jobForm.tagsPlaceholder}
             name="tags"
             className="border rounded px-2.5 py-1.5 w-full text-sm focus:ring-1 focus:ring-primary outline-none"
           />
           <p className="text-[11px] text-muted-foreground mt-1">
-            Separate tags with commas
+            {t.jobForm.tagsHelp}
           </p>
         </div>
       </div>
@@ -180,7 +184,7 @@ export const JobForm: React.FC<JobFormProps> = ({
       {/* Job URL */}
       <div className="flex flex-col sm:flex-row gap-1 sm:gap-2 sm:items-center">
         <label htmlFor="url" className="w-24 shrink-0 text-sm font-medium">
-          Job URL
+          {t.jobForm.jobUrl}
         </label>
         <input
           id="url"
@@ -191,14 +195,14 @@ export const JobForm: React.FC<JobFormProps> = ({
           type="text"
           name="url"
           className="border rounded px-2.5 py-1.5 w-full text-sm focus:ring-1 focus:ring-primary outline-none"
-          placeholder="https://..."
+          placeholder={t.jobForm.jobUrlPlaceholder}
         />
       </div>
 
       {/* Description */}
       <div className="flex flex-col sm:flex-row gap-1 sm:gap-2 sm:items-start">
         <label htmlFor="description" className="w-24 shrink-0 sm:mt-1 text-sm font-medium">
-          Description
+          {t.jobForm.description}
         </label>
         <textarea
           id="description"
@@ -209,14 +213,14 @@ export const JobForm: React.FC<JobFormProps> = ({
           name="description"
           className="border rounded px-2.5 py-1.5 w-full text-sm focus:ring-1 focus:ring-primary outline-none resize-none"
           rows={3}
-          placeholder="Job requirements, responsibilities..."
+          placeholder={t.jobForm.descriptionPlaceholder}
         />
       </div>
 
       {/* Notes */}
       <div className="flex flex-col sm:flex-row gap-1 sm:gap-2 sm:items-start">
         <label htmlFor="notes" className="w-24 shrink-0 sm:mt-1 text-sm font-medium">
-          Notes
+          {t.jobForm.notes}
         </label>
         <textarea
           id="notes"
@@ -227,18 +231,18 @@ export const JobForm: React.FC<JobFormProps> = ({
           name="notes"
           className="border rounded px-2.5 py-1.5 w-full text-sm focus:ring-1 focus:ring-primary outline-none resize-none"
           rows={2}
-          placeholder="Recruiter contact, interview prep..."
+          placeholder={t.jobForm.notesPlaceholder}
         />
       </div>
 
       <div className="flex justify-end gap-2 pt-2">
         {onCancel && (
           <Button variant="outline" type="button" onClick={onCancel} disabled={isSubmitting}>
-            Cancel
+            {t.common.cancel}
           </Button>
         )}
         <Button type="submit" disabled={isSubmitting}>
-          {isSubmitting ? "Saving..." : submitLabel}
+          {isSubmitting ? t.jobForm.saving : resolvedSubmitLabel}
         </Button>
       </div>
     </form>
