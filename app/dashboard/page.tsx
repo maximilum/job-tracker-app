@@ -57,20 +57,17 @@ const DashboardComponent = async () => {
 
   if (!board) {
     return (
-      <div className="flex h-[calc(100vh-52px)] items-center justify-center">
+      <div className="flex h-[calc(100dvh-4rem)] items-center justify-center">
         <p className="text-muted-foreground">Unable to load board. Please refresh.</p>
       </div>
     );
   }
 
   return (
-    <div>
-      <div className="w-full h-[calc(100vh-52px)] py-4 px-4 lg:py-12 lg:px-36">
-        <div className="w-full h-full">
-          <DashboardHeader rawBoardName={board.name} />
-
-          <KanbanBoard boardDoc={board} />
-        </div>
+    <div className="flex h-[calc(100dvh-4rem)] w-full flex-col px-4 py-4 lg:px-8">
+      <DashboardHeader rawBoardName={board.name} />
+      <div className="min-h-0 flex-1">
+        <KanbanBoard boardDoc={board} />
       </div>
     </div>
   );

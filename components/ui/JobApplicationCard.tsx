@@ -33,7 +33,7 @@ export const JobApplicationCard: React.FC<JobApplicationCardProps> = ({
               <GripVertical size={16} />
             </span>
             <CardTitle>
-              <h2 className="text-primary font-semibold text-sm">
+              <h2 className="font-semibold text-sm text-foreground">
                 {job.position}
               </h2>
               <h3 className="font-semibold text-xs text-muted-foreground">

@@ -13,11 +13,11 @@ export const DashboardHeader: React.FC<DashboardHeaderProps> = ({
   const { t, getLocalizedBoardName } = useLanguage();
 
   return (
-    <div className="mb-8">
+    <div className="mb-4">
       <h1 className="text-2xl font-bold">
         {getLocalizedBoardName(rawBoardName)}
       </h1>
-      <p className="text-sm text-accent-foreground mt-1">
+      <p className="text-sm text-muted-foreground mt-1">
         {t.dashboard.subtitle}
       </p>
     </div>

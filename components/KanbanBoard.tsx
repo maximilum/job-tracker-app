@@ -60,26 +60,28 @@ interface ColConfig {
 }
 
 // Config mapping with positional modulo fallback (Fixes Addendum #4)
+// Neutral chips everywhere; the single accent lives on the Offer column (index 3)
+const NEUTRAL_CHIP = "bg-secondary text-secondary-foreground";
 const COLUMN_CONFIG: Array<ColConfig> = [
   {
-    color: "bg-cyan-500",
-    icon: <Calendar className="h-6 w-6" />,
+    color: NEUTRAL_CHIP,
+    icon: <Calendar className="h-4 w-4" />,
   },
   {
-    color: "bg-purple-500",
-    icon: <CheckCircle2 className="h-6 w-6" />,
+    color: NEUTRAL_CHIP,
+    icon: <CheckCircle2 className="h-4 w-4" />,
   },
   {
-    color: "bg-green-500",
-    icon: <Mic className="h-6 w-6" />,
+    color: NEUTRAL_CHIP,
+    icon: <Mic className="h-4 w-4" />,
   },
   {
-    color: "bg-yellow-500",
-    icon: <Award className="h-6 w-6" />,
+    color: "bg-primary text-primary-foreground",
+    icon: <Award className="h-4 w-4" />,
   },
   {
-    color: "bg-red-500",
-    icon: <XCircle className="h-6 w-6" />,
+    color: NEUTRAL_CHIP,
+    icon: <XCircle className="h-4 w-4" />,
   },
 ];
 
@@ -145,7 +147,7 @@ const DroppableColumn = ({
   }
 
   return (
-    <Card className="p-0 min-w-80 md:min-w-96 h-full flex flex-col">
+    <Card className="p-0 min-w-80 md:min-w-96 h-full flex flex-col snap-start">
       {/* Column -> Add Job Dialog with Unified JobForm (Fixes Bug 5.5) */}
       <Dialog open={isOpen} onOpenChange={setIsOpen}>
         <DialogContent className="sm:max-w-xl w-[95vw] max-h-[90vh] overflow-y-auto">
@@ -169,7 +171,7 @@ const DroppableColumn = ({
       <CardHeader className="border-b p-4">
         <div className="flex justify-between items-center">
           <div className="flex items-center gap-2">
-            <span className={`p-1 rounded-md text-white ${config.color}`}>
+            <span className={`p-1.5 rounded-md ${config.color}`}>
               {config.icon}
             </span>
             <CardTitle className="text-base font-semibold">
@@ -299,7 +301,7 @@ const KanbanBoard = ({ boardDoc }: KanbanBoardProps) => {
   const sensors = useSensors(mouseSensor, touchSensor);
 
   return (
-    <div className="flex gap-4 overflow-x-auto pb-16 h-full">
+    <div className="flex h-full snap-x snap-proximity gap-4 overflow-x-auto pb-2 lg:snap-none">
       <DndContext
         id="kanban-board-dnd-context"
         sensors={sensors}
