@@ -49,7 +49,7 @@ const SignUp = () => {
   }
 
   return (
-    <div className="min-h-[calc(100vh-52px)] w-full flex justify-center items-center p-4">
+    <div className="min-h-[calc(100dvh-4rem)] w-full flex justify-center items-center p-4">
       <Card className="p-8 w-full max-w-md">
         <CardTitle className="mb-6">
           <h1 className="text-2xl font-bold">{t.auth.signUpTitle}</h1>
