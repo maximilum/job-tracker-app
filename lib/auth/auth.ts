@@ -54,11 +54,16 @@ export async function getAuth(): Promise<AuthInstance> {
 
   if (!authPromise) {
     authPromise = (async () => {
-      const mongooseInstance = await connectDB();
-      const client = mongooseInstance.connection.getClient() as unknown as MongoClient;
-      const db = client.db();
-      authInstance = createAuth(db, client);
-      return authInstance;
+      try {
+        const mongooseInstance = await connectDB();
+        const client = mongooseInstance.connection.getClient() as unknown as MongoClient;
+        const db = client.db();
+        authInstance = createAuth(db, client);
+        return authInstance;
+      } catch (error) {
+        authPromise = null;
+        throw error;
+      }
     })();
   }
 
@@ -78,6 +83,15 @@ export const auth = new Proxy({} as AuthInstance, {
       return Reflect.get(authInstance, prop, receiver);
     }
     return Reflect.get(target, prop, receiver);
+  },
+  has(target, prop) {
+    if (prop === "handler") {
+      return true;
+    }
+    if (authInstance) {
+      return Reflect.has(authInstance, prop);
+    }
+    return Reflect.has(target, prop);
   },
 });
 

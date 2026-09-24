@@ -15,9 +15,8 @@ if (!global.mongoose) {
   global.mongoose = cached;
 }
 
-const MONGO_URI = process.env.MONGODB_URI;
-
 async function connectDB() {
+  const MONGO_URI = process.env.MONGODB_URI;
   if (!MONGO_URI) {
     throw new Error(
       "Please define the MONGODB_URI environment variable inside .env",
