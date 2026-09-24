@@ -39,13 +39,14 @@ export const translations = {
       demoDataBadge: "بيانات تجريبية",
       demoSaveCta: "سجّل مجاناً لتحفظ لوحتك",
       startFree: "ابدأ مجاناً",
-      feature1Title: "تنظيم الطلبات",
+      featuresTitle: "كل ما تحتاجه لبحثك عن عمل",
+      feature1Title: "لوحات وأعمدة مرنة",
       feature1Desc:
         "أنشئ لوحات وأعمدة مخصصة لتتبع طلبات التوظيف الخاصة بك في كل مرحلة من مراحل التقديم.",
-      feature2Title: "حافظ على تنظيمك",
+      feature2Title: "كل شيء في مكان واحد",
       feature2Desc:
         "لا تفقد أي تقديم وظيفي أبداً. احتفظ بجميع بيانات بحثك عن وظيفة في مكان واحد مركزي.",
-      feature3Title: "متابعة التقدم",
+      feature3Title: "تابع تقدمك",
       feature3Desc:
         "راقب حالة تقديمك من التقديم وحتى المقابلة والعرض عبر لوحات كانبان التفاعلية.",
     },
@@ -151,13 +152,14 @@ export const translations = {
       demoDataBadge: "Demo data",
       demoSaveCta: "Sign up free to save your board",
       startFree: "Start Free",
-      feature1Title: "Organize Applications",
+      featuresTitle: "Everything you need for the job hunt",
+      feature1Title: "Flexible boards",
       feature1Desc:
         "Create custom boards and columns to track your job applications at every stage of the process.",
-      feature2Title: "Stay Organized",
+      feature2Title: "Everything in one place",
       feature2Desc:
         "Never lose track of an application. Keep all your job search information in one centralized place.",
-      feature3Title: "Track Progress",
+      feature3Title: "Track your progress",
       feature3Desc:
         "Monitor your application status from applied to interview to offer with visual Kanban boards.",
     },
