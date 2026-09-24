@@ -26,11 +26,16 @@ export const translations = {
       logout: "تسجيل الخروج",
     },
     landing: {
+      heroEyebrow: "مصمم للعربية أولاً",
+      heroTitle: "كل طلباتك.",
+      heroTitleAccent: "لوحة واحدة.",
+      heroSubtitle:
+        "اسحب، رتّب، وتابع كل فرصة وظيفية من أول تقديم حتى توقيع العقد.",
+      orContinueWithEmail: "أو بالبريد الإلكتروني",
+      emailCapturePlaceholder: "بريدك الإلكتروني",
       heroTitleStart: "لا تفوّت ",
       heroTitleHighlight: "فرصة",
       heroTitleEnd: " وظيفية بعد اليوم",
-      heroSubtitle:
-        "من التقديم الأول وحتى العرض النهائي، أدر رحلة بحثك عن وظيفة في لوحة تحكم واحدة متكاملة وسلسة. ضع تذكيرات، وتابع التقدم، ولا تدع أي فرصة تفوتك.",
       startFree: "ابدأ مجاناً",
       freeNotice: "سيبقى مجانياً دائماً، بدون بطاقة ائتمان. بدون فترات تجريبية. بدون قيود.",
       tabOrganize: "تنظيم الطلبات",
@@ -135,11 +140,16 @@ export const translations = {
       logout: "Log out",
     },
     landing: {
+      heroEyebrow: "Designed for Arabic first",
+      heroTitle: "Every application.",
+      heroTitleAccent: "One board.",
+      heroSubtitle:
+        "Drag, organize, and track every opportunity from first application to signed offer.",
+      orContinueWithEmail: "or with your email",
+      emailCapturePlaceholder: "Your email address",
       heroTitleStart: "Never Lose ",
       heroTitleHighlight: "Track",
       heroTitleEnd: " of an Opportunity Again",
-      heroSubtitle:
-        "From first application to final offer, manage your entire job search journey in one beautiful dashboard. Set reminders, track progress, and never let another opportunity slip through the cracks.",
       startFree: "Start Free",
       freeNotice: "it will always be free, No credit card. No trials. No catch.",
       tabOrganize: "Organize Applications",

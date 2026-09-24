@@ -5,7 +5,7 @@ import { Card, CardContent, CardFooter, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import Link from "next/link";
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import { signUp } from "@/lib/auth/auth-client";
 import { useRouter } from "next/navigation";
 import { useLanguage } from "@/lib/i18n/LanguageContext";
@@ -21,6 +21,12 @@ const SignUp = () => {
 
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState("");
+
+  // Prefill the email when arriving from the homepage hero capture (?email=)
+  useEffect(() => {
+    const prefill = new URLSearchParams(window.location.search).get("email");
+    if (prefill) setEmail(prefill);
+  }, []);
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();

@@ -1,14 +1,8 @@
 "use client";
 
+import Hero from "@/components/Hero";
 import HeroImagesSection from "@/components/HeroImagesSection";
-import { Button } from "@/components/ui/button";
-import {
-  ArrowBigRight,
-  Briefcase,
-  CheckCircle2,
-  TrendingUp,
-} from "lucide-react";
-import Link from "next/link";
+import { Briefcase, CheckCircle2, TrendingUp } from "lucide-react";
 import { useLanguage } from "@/lib/i18n/LanguageContext";
 
 export default function Home() {
@@ -17,32 +11,8 @@ export default function Home() {
   return (
     <div className="flex flex-col bg-background min-h-screen">
       <main className="flex-1">
-        {/* Hero section */}
-        <section className="container mx-auto px-4 py-24 sm:py-32">
-          <div className="max-w-4xl mx-auto text-center">
-            <h1 className="font-extrabold text-4xl sm:text-6xl mb-6 leading-tight">
-              {t.landing.heroTitleStart}
-              <span className="text-muted-foreground">
-                {t.landing.heroTitleHighlight}
-              </span>
-              {t.landing.heroTitleEnd}
-            </h1>
-            <p className="text-lg sm:text-xl text-muted-foreground mb-10 leading-relaxed max-w-3xl mx-auto">
-              {t.landing.heroSubtitle}
-            </p>
-            <div className="flex flex-col items-center gap-4">
-              <Link href="/sign-up">
-                <Button size="xl" className="font-semibold text-xl gap-2">
-                  <span>{t.landing.startFree}</span>
-                  <ArrowBigRight className="size-8 rtl:rotate-180 transition-transform" />
-                </Button>
-              </Link>
-              <p className="text-sm text-muted-foreground">
-                {t.landing.freeNotice}
-              </p>
-            </div>
-          </div>
-        </section>
+        {/* Hero */}
+        <Hero />
 
         {/* Hero images section */}
         <HeroImagesSection />
