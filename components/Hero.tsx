@@ -22,7 +22,7 @@ const Hero = () => {
   };
 
   return (
-    <section className="relative flex min-h-[calc(100dvh-4rem)] items-center justify-center overflow-hidden px-4 py-16">
+    <section className="relative flex min-h-[calc(100dvh-4rem-4rem)] snap-start items-center justify-center overflow-hidden px-4 py-16 lg:snap-stop-always">
       {/* Faint accent wash, derived from the primary token so it tracks both themes */}
       <div
         aria-hidden
