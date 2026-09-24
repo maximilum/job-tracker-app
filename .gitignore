@@ -41,3 +41,11 @@ yarn-error.log*
 # typescript
 *.tsbuildinfo
 next-env.d.ts
+
+# taste skill (project-local, intentionally non-versioned)
+/.agents/
+/.claude/
+/.hermes/
+/.lingma/
+/.windsurf/
+skills-lock.json
