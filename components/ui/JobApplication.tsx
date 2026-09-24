@@ -44,6 +44,7 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import JobForm, { JobFormData } from "../JobForm";
+import { useLanguage } from "@/lib/i18n/LanguageContext";
 
 interface JobApplicationProps {
   job: Job;
@@ -52,6 +53,7 @@ interface JobApplicationProps {
 
 const JobApplication = ({ job, columns }: JobApplicationProps) => {
   const [isExpanded, setIsExpanded] = useState<boolean>(false);
+  const { t, getLocalizedColumnName } = useLanguage();
 
   // DnD Kit Sortable
   const {
@@ -81,7 +83,10 @@ const JobApplication = ({ job, columns }: JobApplicationProps) => {
   const [editError, setEditError] = useState("");
 
   function handleDelete(jobId: string) {
-    if (typeof window !== "undefined" && !window.confirm("Are you sure you want to delete this job application?")) {
+    if (
+      typeof window !== "undefined" &&
+      !window.confirm(t.jobCard.deleteConfirm)
+    ) {
       return;
     }
     boardMutationQueue.enqueue(
@@ -135,7 +140,7 @@ const JobApplication = ({ job, columns }: JobApplicationProps) => {
       <Dialog open={isOpen} onOpenChange={setIsOpen}>
         <DialogContent className="sm:max-w-xl w-[95vw] max-h-[90vh] overflow-y-auto">
           <DialogHeader className="mb-2">
-            <DialogTitle>Edit Job Details</DialogTitle>
+            <DialogTitle>{t.jobCard.editDialogTitle}</DialogTitle>
           </DialogHeader>
 
           <JobForm
@@ -151,7 +156,7 @@ const JobApplication = ({ job, columns }: JobApplicationProps) => {
               tags: job.tags?.join(", "),
               description: job.description,
             }}
-            submitLabel="Save Changes"
+            submitLabel={t.jobForm.saveChanges}
             isSubmitting={isSubmitting}
             error={editError}
             onCancel={() => setIsOpen(false)}
@@ -172,7 +177,7 @@ const JobApplication = ({ job, columns }: JobApplicationProps) => {
                 {/* Dedicated Drag Handle with GripVertical (Fixes Addendum #2) */}
                 <button
                   type="button"
-                  aria-label="Drag job card"
+                  aria-label={t.jobCard.dragCardAria}
                   className="cursor-grab active:cursor-grabbing text-muted-foreground hover:text-foreground touch-none p-1 rounded hover:bg-muted"
                   {...attributes}
                   {...listeners}
@@ -215,7 +220,7 @@ const JobApplication = ({ job, columns }: JobApplicationProps) => {
                     >
                       <div className="flex gap-2 items-center">
                         <SquarePen size={16} />
-                        <span>Edit</span>
+                        <span>{t.jobCard.edit}</span>
                       </div>
                     </DropdownMenuItem>
 
@@ -228,18 +233,20 @@ const JobApplication = ({ job, columns }: JobApplicationProps) => {
                             handleMoveToNewColumn(e, job._id, col._id);
                           }}
                         >
-                          <span>Move to {col.name}</span>
+                          <span>
+                            {t.jobCard.moveTo} {getLocalizedColumnName(col.name)}
+                          </span>
                         </DropdownMenuItem>
                       );
                     })}
 
                     <DropdownMenuItem
                       onClick={() => handleDelete(job._id)}
-                      className="text-destructive focus:text-destructive"
+                      className="text-destructive focus:text-destructive cursor-pointer"
                     >
                       <div className="flex gap-2 items-center">
                         <Trash size={16} />
-                        <span>Delete</span>
+                        <span>{t.jobCard.delete}</span>
                       </div>
                     </DropdownMenuItem>
                   </DropdownMenuContent>
@@ -273,13 +280,15 @@ const JobApplication = ({ job, columns }: JobApplicationProps) => {
             >
               <div className="overflow-hidden text-xs space-y-2">
                 {job.description && (
-                  <p className="border-l-2 border-primary/40 pl-3 italic text-muted-foreground">
+                  <p className="border-s-2 border-primary/40 ps-3 italic text-muted-foreground">
                     {job.description}
                   </p>
                 )}
                 {job.notes && (
                   <p className="text-muted-foreground">
-                    <span className="font-semibold text-foreground">Notes: </span>
+                    <span className="font-semibold text-foreground">
+                      {t.jobCard.notesPrefix}
+                    </span>
                     {job.notes}
                   </p>
                 )}
@@ -291,7 +300,7 @@ const JobApplication = ({ job, columns }: JobApplicationProps) => {
                     className="text-primary underline block"
                     onClick={(e) => e.stopPropagation()}
                   >
-                    View Job Posting
+                    {t.jobCard.viewPosting}
                   </a>
                 )}
               </div>
