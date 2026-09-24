@@ -8,9 +8,11 @@ import Link from "next/link";
 import React, { useState } from "react";
 import { signIn } from "@/lib/auth/auth-client";
 import { useRouter } from "next/navigation";
+import { useLanguage } from "@/lib/i18n/LanguageContext";
 
 const SignIn = () => {
-  const Router = useRouter();
+  const router = useRouter();
+  const { t } = useLanguage();
 
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -27,29 +29,28 @@ const SignIn = () => {
       const result = await signIn.email({ email, password });
 
       if (result.error) {
-        // console.log(result);
-        setError(result.error?.message ?? "Something went wrong");
+        setError(result.error?.message ?? t.auth.somethingWentWrong);
       } else {
-        Router.push("/dashboard");
+        router.push("/dashboard");
       }
     } catch {
-      setError("An unexpected error occurred");
+      setError(t.common.unexpectedError);
     } finally {
       setIsLoading(false);
     }
   }
 
   return (
-    <div className="min-h-[calc(100vh-52px)] w-full flex justify-center items-center">
-      <Card className="p-8 w-128">
-        <CardTitle>
-          <h1>Sign In</h1>
+    <div className="min-h-[calc(100vh-52px)] w-full flex justify-center items-center p-4">
+      <Card className="p-8 w-full max-w-md">
+        <CardTitle className="mb-4">
+          <h1 className="text-2xl font-bold">{t.auth.signInTitle}</h1>
         </CardTitle>
         <form onSubmit={handleSubmit}>
-          <CardContent className="flex flex-col gap-4 mb-8">
+          <CardContent className="flex flex-col gap-4 mb-6 px-0">
             <div>
-              <Label htmlFor="email" className="mb-1">
-                Email
+              <Label htmlFor="email" className="mb-1.5 block">
+                {t.auth.email}
               </Label>
               <Input
                 id="email"
@@ -57,13 +58,13 @@ const SignIn = () => {
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 required
-                placeholder="John@doe.com"
-                className="placeholder:text-neutral-300"
-              ></Input>
+                placeholder={t.auth.emailPlaceholder}
+                className="placeholder:text-muted-foreground/60"
+              />
             </div>
             <div>
-              <Label htmlFor="password" className="mb-1">
-                Password
+              <Label htmlFor="password" className="mb-1.5 block">
+                {t.auth.password}
               </Label>
               <Input
                 id="password"
@@ -72,23 +73,23 @@ const SignIn = () => {
                 minLength={8}
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
-              ></Input>
+              />
             </div>
           </CardContent>
-          <CardFooter className="flex flex-col gap-4">
-            <Button type="submit" className="w-full" disabled={isLoading}>
-              {isLoading ? "Signing in..." : "Sign in"}
+          <CardFooter className="flex flex-col gap-4 px-0">
+            <Button type="submit" className="w-full font-semibold" disabled={isLoading}>
+              {isLoading ? t.auth.signingIn : t.auth.signInButton}
             </Button>
             {error && (
               <p className="text-center text-xs text-destructive">{error}</p>
             )}
-            <p className="text-xs">
-              if you have an account{"  "}
+            <p className="text-xs text-center text-muted-foreground">
+              {t.auth.noAccount}{" "}
               <Link
                 href="/sign-up"
-                className="text-primary font-semibold hover:text-primary/50 transition-colors ml-2"
+                className="text-primary font-semibold hover:text-primary/70 transition-colors ms-1 underline-offset-4 hover:underline"
               >
-                sign up
+                {t.auth.signUpButton}
               </Link>
             </p>
           </CardFooter>
