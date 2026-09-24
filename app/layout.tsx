@@ -48,6 +48,19 @@ export default function RootLayout({
             `,
           }}
         />
+        <script
+          dangerouslySetInnerHTML={{
+            __html: `
+              try {
+                var theme = localStorage.getItem('app_theme');
+                var prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+                if (theme === 'dark' || (!theme && prefersDark)) {
+                  document.documentElement.classList.add('dark');
+                }
+              } catch (e) {}
+            `,
+          }}
+        />
       </head>
       <body
         className={`${fontSans.className} ${fontSans.variable} ${fontMono.variable} font-sans antialiased overflow-x-hidden`}

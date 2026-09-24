@@ -23,6 +23,7 @@ import {
 } from "@/components/ui/avatar";
 import { useLanguage } from "@/lib/i18n/LanguageContext";
 import LanguageToggle from "./LanguageToggle";
+import ThemeToggle from "./ThemeToggle";
 
 const Navbar = () => {
   const router = useRouter();
@@ -48,6 +49,7 @@ const Navbar = () => {
         </Link>
         <div className="flex items-center gap-3">
           <LanguageToggle />
+          <ThemeToggle />
           {!user ? (
             <div className="flex items-center gap-2">
               <Link href={"/sign-in"}>

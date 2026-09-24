@@ -16,6 +16,7 @@ export const translations = {
       switchToEnglish: "English (LTR)",
       switchToArabic: "العربية (RTL)",
       language: "اللغة",
+      themeToggle: "تبديل المظهر",
     },
     nav: {
       appName: "متتبع الوظائف",
@@ -124,6 +125,7 @@ export const translations = {
       switchToEnglish: "English (LTR)",
       switchToArabic: "العربية (RTL)",
       language: "Language",
+      themeToggle: "Toggle theme",
     },
     nav: {
       appName: "Job Tracker",
