@@ -9,6 +9,7 @@ import React, { useState } from "react";
 import { signIn } from "@/lib/auth/auth-client";
 import { useRouter } from "next/navigation";
 import { useLanguage } from "@/lib/i18n/LanguageContext";
+import SocialAuthButtons from "@/components/SocialAuthButtons";
 
 const SignIn = () => {
   const router = useRouter();
@@ -43,9 +44,25 @@ const SignIn = () => {
   return (
     <div className="min-h-[calc(100vh-52px)] w-full flex justify-center items-center p-4">
       <Card className="p-8 w-full max-w-md">
-        <CardTitle className="mb-4">
+        <CardTitle className="mb-6">
           <h1 className="text-2xl font-bold">{t.auth.signInTitle}</h1>
         </CardTitle>
+
+        {/* Social Auth Providers */}
+        <SocialAuthButtons onError={setError} disabled={isLoading} />
+
+        {/* Divider */}
+        <div className="relative my-6">
+          <div className="absolute inset-0 flex items-center">
+            <span className="w-full border-t border-border" />
+          </div>
+          <div className="relative flex justify-center text-xs uppercase">
+            <span className="bg-card px-2 text-muted-foreground">
+              {t.auth.orContinueWith}
+            </span>
+          </div>
+        </div>
+
         <form onSubmit={handleSubmit}>
           <CardContent className="flex flex-col gap-4 mb-6 px-0">
             <div>

@@ -19,9 +19,32 @@ function createAuth(db: Db, client: MongoClient) {
     trustedOrigins,
     database: mongodbAdapter(db, {
       client,
+      transaction: false,
     }),
+    account: {
+      accountLinking: {
+        enabled: true,
+        trustedProviders: ["google", "github"],
+      },
+    },
     emailAndPassword: {
       enabled: true,
+    },
+    socialProviders: {
+      google: {
+        clientId: process.env.GOOGLE_CLIENT_ID || "",
+        clientSecret: process.env.GOOGLE_CLIENT_SECRET || "",
+        enabled: Boolean(
+          process.env.GOOGLE_CLIENT_ID && process.env.GOOGLE_CLIENT_SECRET,
+        ),
+      },
+      github: {
+        clientId: process.env.GITHUB_CLIENT_ID || "",
+        clientSecret: process.env.GITHUB_CLIENT_SECRET || "",
+        enabled: Boolean(
+          process.env.GITHUB_CLIENT_ID && process.env.GITHUB_CLIENT_SECRET,
+        ),
+      },
     },
     session: {
       cookieCache: {
@@ -33,8 +56,12 @@ function createAuth(db: Db, client: MongoClient) {
       user: {
         create: {
           after: async (user) => {
-            if (user) {
-              await initUserBoard(user.id);
+            if (user?.id) {
+              try {
+                await initUserBoard(user.id);
+              } catch (error) {
+                console.error("Failed to initialize board for user:", user.id, error);
+              }
             }
           },
         },

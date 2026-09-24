@@ -60,6 +60,10 @@ export const translations = {
       hasAccount: "إذا كان لديك حساب بالفعل",
       noAccount: "ليس لديك حساب؟",
       somethingWentWrong: "حدث خطأ ما",
+      orContinueWith: "أو المتابعة عبر",
+      continueWithGoogle: "المتابعة باستخدام Google",
+      continueWithGitHub: "المتابعة باستخدام GitHub",
+      providerNotConfigured: "هذا المزود غير مهيأ بعد. يرجى إضافة مفاتيح OAuth في ملف .env",
     },
     dashboard: {
       defaultBoardTitle: "لوحة الوظائف",
@@ -164,6 +168,10 @@ export const translations = {
       hasAccount: "if you have an account",
       noAccount: "Don't have an account?",
       somethingWentWrong: "Something went wrong",
+      orContinueWith: "Or continue with",
+      continueWithGoogle: "Continue with Google",
+      continueWithGitHub: "Continue with GitHub",
+      providerNotConfigured: "This provider is not configured yet. Please configure OAuth keys in .env",
     },
     dashboard: {
       defaultBoardTitle: "Job Board",
